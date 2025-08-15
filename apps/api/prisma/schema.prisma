@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  tasks      Task[]
+  staff      Staff[]
+  shareLinks ShareLink[]
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  name      String
+  mandays   Int      @default(1)
+  jiraUrl   String?
+  theme     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Multi-tenant relation
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  assignment Assignment?
+
+  @@index([userId, theme])
+  @@index([theme])
+}
+
+model Staff {
+  id          String       @id @default(uuid())
+  name        String
+  
+  // Multi-tenant relation
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  assignments Assignment[]
+
+  @@index([userId, name])
+}
+
+model Assignment {
+  taskId   String  @id
+  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  staffId  String?
+  staff    Staff?  @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  position Decimal
+  updatedAt DateTime @updatedAt
+
+  @@index([staffId, position])
+}
+
+model ShareLink {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  type       String
+  permission String
+  viewParams String?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  
+  // Multi-tenant relation
+  createdBy  String
+  user       User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  
+  snapshots  ShareSnapshot[]
+
+  @@index([expiresAt])
+  @@index([createdBy])
+}
+
+model ShareSnapshot {
+  id       String   @id @default(cuid())
+  shareId  String
+  share    ShareLink @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  state    String
+  csvUrl   String?
+  jsonUrl  String?
+  pngUrl   String?
+  pdfUrl   String?
+  createdAt DateTime @default(now())
+
+  @@index([shareId])
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+}

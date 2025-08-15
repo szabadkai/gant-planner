@@ -266,7 +266,19 @@ function renderBacklog() {
   });
 
   // Allow dropping back tasks
-  makeDroppable(el.backlog, (taskId) => returnTaskToBacklog(taskId));
+  // Compute insertion index in backlog based on mouse Y position
+  const computeBacklogIndex = (e) => {
+    const rect = el.backlog.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const children = Array.from(el.backlog.querySelectorAll('.task-card'));
+    for (let i = 0; i < children.length; i++) {
+      const cr = children[i].getBoundingClientRect();
+      const mid = (cr.top - rect.top) + cr.height / 2;
+      if (y < mid) return i;
+    }
+    return children.length;
+  };
+  makeDroppable(el.backlog, (taskId, index) => returnTaskToBacklogAt(taskId, index), el.backlog, computeBacklogIndex);
 }
 
 // --- Edit Task (Backlog sidebar) ---
@@ -382,7 +394,31 @@ function renderGantt(axis) {
     // Drop handling on the whole row (so blocks remain clickable above)
     const dropzone = document.createElement("div");
     dropzone.className = "dropzone"; // visual only; no pointer events
-    makeDroppable(row, (taskId) => enqueueTaskToStaff(taskId, s.id), row);
+    const computeRowIndex = (e) => {
+      const tasksEl = tasksLayer;
+      const rect = tasksEl.getBoundingClientRect();
+      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const cellWidthStr = getComputedStyle(document.documentElement).getPropertyValue('--cell-width') || '32px';
+      const cellWidth = parseFloat(cellWidthStr);
+      const dropDay = Math.max(0, Math.round(x / (cellWidth || 32)));
+      // Map to queue insertion index based on cumulative end day
+      let cum = 0;
+      for (let i = 0; i < s.queue.length; i++) {
+        const t = taskById(s.queue[i]);
+        const len = t ? t.mandays : 0;
+        const start = cum;
+        const end = start + len;
+        if (dropDay <= Math.max(start, Math.floor((start + end) / 2))) {
+          return i; // before this task
+        }
+        if (dropDay < end) {
+          return i + 1; // inside block -> after it
+        }
+        cum = end;
+      }
+      return s.queue.length;
+    };
+    makeDroppable(row, (taskId, index) => enqueueTaskToStaffAt(taskId, s.id, index), row, computeRowIndex);
 
     // Tasks overlay
     const tasksLayer = document.createElement("div");
@@ -407,7 +443,7 @@ function renderGantt(axis) {
         ${t.jira ? `<a class=\"jira\" href=\"${escapeHTML(t.jira)}\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Open Jira\">↗</a>` : ''}`;
       block.dataset.taskId = t.id;
 
-      block.addEventListener("click", () => returnTaskToBacklog(t.id));
+      block.addEventListener("click", () => returnTaskToBacklogAt(t.id, 0));
       block.draggable = true;
       block.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", t.id);
@@ -556,7 +592,7 @@ function exportCSV() {
 }
 
 // --- DnD helpers ---
-function makeDroppable(element, onDrop, highlightEl) {
+function makeDroppable(element, onDrop, highlightEl, computeIndex) {
   const target = highlightEl || element;
   element.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -568,8 +604,45 @@ function makeDroppable(element, onDrop, highlightEl) {
     e.preventDefault();
     target.classList.remove("drag-over");
     const taskId = e.dataTransfer.getData("text/plain");
-    if (taskId) onDrop(taskId);
+    if (taskId) {
+      const index = computeIndex ? computeIndex(e) : undefined;
+      onDrop(taskId, index);
+    }
   });
+}
+
+function insertAt(arr, index, value) {
+  const idx = Math.max(0, Math.min(index ?? arr.length, arr.length));
+  arr.splice(idx, 0, value);
+}
+
+function enqueueTaskToStaffAt(taskId, staffId, index) {
+  if (!taskById(taskId)) return;
+  const staff = state.staff.find((s) => s.id === staffId);
+  if (!staff) return;
+  const oldIndex = staff.queue.indexOf(taskId);
+  // Remove everywhere first
+  state.backlog = state.backlog.filter((id) => id !== taskId);
+  state.staff.forEach((s) => (s.queue = s.queue.filter((id) => id !== taskId)));
+  let idx = Math.max(0, Math.min(index ?? staff.queue.length, staff.queue.length));
+  if (oldIndex >= 0 && index != null && index > oldIndex) idx--; // adjust when moving down within same queue
+  staff.queue.splice(idx, 0, taskId);
+  saveState();
+  renderAll();
+}
+
+function returnTaskToBacklogAt(taskId, index) {
+  // Capture old index if present
+  const oldIndex = state.backlog.indexOf(taskId);
+  // Remove from all queues
+  state.staff.forEach((s) => (s.queue = s.queue.filter((id) => id !== taskId)));
+  // Remove existing in backlog if present
+  state.backlog = state.backlog.filter((id) => id !== taskId);
+  let idx = Math.max(0, Math.min(index ?? 0, state.backlog.length));
+  if (oldIndex >= 0 && index != null && index > oldIndex) idx--; // adjust when moving down within backlog
+  state.backlog.splice(idx, 0, taskId);
+  saveState();
+  renderAll();
 }
 
 // --- Event wiring ---

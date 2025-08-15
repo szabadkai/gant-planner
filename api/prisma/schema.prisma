@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  name      String
+  mandays   Int      @default(1)
+  jiraUrl   String?
+  theme     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assignment Assignment?
+
+  @@index([theme])
+}
+
+model Staff {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  assignments Assignment[]
+}
+
+model Assignment {
+  taskId   String  @id
+  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  staffId  String?
+  staff    Staff?  @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  position Decimal
+  updatedAt DateTime @updatedAt
+
+  @@index([staffId, position])
+}
+
+model ShareLink {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  type       String
+  permission String
+  viewParams String?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  snapshots  ShareSnapshot[]
+
+  @@index([expiresAt])
+}
+
+model ShareSnapshot {
+  id       String   @id @default(cuid())
+  shareId  String
+  share    ShareLink @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  state    String
+  csvUrl   String?
+  jsonUrl  String?
+  pngUrl   String?
+  pdfUrl   String?
+  createdAt DateTime @default(now())
+
+  @@index([shareId])
+}
