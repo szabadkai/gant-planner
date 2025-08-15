@@ -165,7 +165,7 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
               <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                 <input type="file" accept=".csv,text/csv" onChange={async (e) => {
                   const file = e.target.files?.[0]; if (!file) return; const text = await file.text();
-                  Papa.parse(text, { header: true, skipEmptyLines: true, complete: async (res) => {
+                  Papa.parse(text, { header: true, skipEmptyLines: true, complete: async (res: Papa.ParseResult<any>) => {
                     const rows: any[] = res.data as any[];
                     // Build a local index of staff name -> id so repeated names don't create duplicates
                     const staffIndex = new Map<string, string>(staffList.map(s => [s.name.toLowerCase(), s.id]));
