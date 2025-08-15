@@ -106,8 +106,9 @@ updateLayoutVars();
 window.addEventListener('resize', updateLayoutVars);
 
 // --- Actions ---
-function addTask(name, mandays) {
+function addTask(name, mandays, jira) {
   const t = { id: uid("task"), name: name.trim(), mandays: Math.max(1, Math.floor(mandays)) };
+  if (jira && typeof jira === 'string' && jira.trim()) t.jira = jira.trim();
   state.tasks.push(t);
   state.backlog.unshift(t.id);
   saveState();
@@ -205,12 +206,18 @@ function renderBacklog() {
     card.className = "task-card";
     card.draggable = true;
     card.dataset.taskId = t.id;
-    card.innerHTML = `<span class="name">${escapeHTML(t.name)}</span><span class="days">${t.mandays}d</span>`;
+    // Show full task name on hover
+    card.title = `${t.name}`;
+    card.innerHTML = `<span class="name">${escapeHTML(t.name)}</span>${t.jira ? `
+      <a class="jira" href="${escapeHTML(t.jira)}" target="_blank" rel="noopener noreferrer" title="Open Jira">↗</a>` : ''}
+      <span class="days">${t.mandays}d</span>`;
     card.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", t.id);
       e.dataTransfer.effectAllowed = "move";
     });
     card.addEventListener("dblclick", () => removeTaskCompletely(t.id));
+    // Prevent link click from triggering card actions
+    card.querySelector('.jira')?.addEventListener('click', (e) => e.stopPropagation());
     el.backlog.appendChild(card);
   });
 
@@ -281,7 +288,8 @@ function renderGantt(axis) {
       block.style.left = `calc(${startIdx} * var(--cell-width))`;
       block.style.width = `calc(${t.mandays} * var(--cell-width))`;
       block.title = `${t.name} (${t.mandays}d)`;
-      block.innerHTML = `<span>${escapeHTML(t.name)}</span><span class="meta">${t.mandays}d</span>`;
+      block.innerHTML = `<span>${escapeHTML(t.name)}</span><span class="meta">${t.mandays}d</span>${t.jira ? `
+        <a class=\"jira\" href=\"${escapeHTML(t.jira)}\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Open Jira\">↗</a>` : ''}`;
       block.dataset.taskId = t.id;
 
       block.addEventListener("click", () => returnTaskToBacklog(t.id));
@@ -290,6 +298,8 @@ function renderGantt(axis) {
         e.dataTransfer.setData("text/plain", t.id);
         e.dataTransfer.effectAllowed = "move";
       });
+      // Prevent link click from returning task to backlog
+      block.querySelector('.jira')?.addEventListener('click', (e) => e.stopPropagation());
 
       tasksLayer.appendChild(block);
     });
@@ -314,6 +324,57 @@ function renderAll() {
   renderBacklog();
   renderStaffList();
   renderGantt(axis);
+}
+
+// --- CSV Export ---
+function csvEscape(val) {
+  const s = (val ?? '').toString();
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function buildExportRows() {
+  const seen = new Set();
+  const rows = [];
+
+  // Backlog tasks first
+  state.backlog.forEach((id) => {
+    const t = taskById(id); if (!t) return; seen.add(id);
+    rows.push([t.name, t.mandays, '', t.jira || '']);
+  });
+
+  // Assigned tasks by staff and queue order
+  state.staff.forEach((s) => {
+    s.queue.forEach((id) => {
+      const t = taskById(id); if (!t) return; seen.add(id);
+      rows.push([t.name, t.mandays, s.name, t.jira || '']);
+    });
+  });
+
+  // Any remaining tasks (if any)
+  state.tasks.forEach((t) => {
+    if (seen.has(t.id)) return;
+    rows.push([t.name, t.mandays, '', t.jira || '']);
+  });
+
+  return rows;
+}
+
+function exportCSV() {
+  const header = ['name', 'mandays', 'staff', 'jira'];
+  const rows = buildExportRows();
+  const lines = [header, ...rows].map((r) => r.map(csvEscape).join(','));
+  const csv = lines.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href = url;
+  a.download = `gantt-export-${ts}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // --- DnD helpers ---
@@ -427,12 +488,17 @@ function importCSVText(text) {
   // Header mapping
   let header = rows[0].map((h) => (h || '').toString().trim().toLowerCase());
   let startIdx = 1;
-  let idxName = header.indexOf('name');
-  let idxDays = header.indexOf('mandays');
-  let idxStaff = header.indexOf('staff');
+  // Normalize headers to match variants like "Jira URL", "jira_link"
+  const norm = (h) => h.replace(/[^a-z]/g, '');
+  const normed = header.map(norm);
+  let idxName = normed.indexOf('name');
+  let idxDays = normed.indexOf('mandays');
+  let idxStaff = normed.indexOf('staff');
+  const jiraAliases = new Set(['jira','jiralink','jiraurl','url','link']);
+  let idxJira = normed.findIndex((h) => jiraAliases.has(h));
   // If header not detected, assume first row is data with [name, mandays, staff?]
   if (idxName === -1 && idxDays === -1) {
-    idxName = 0; idxDays = 1; idxStaff = 2; startIdx = 0;
+    idxName = 0; idxDays = 1; idxStaff = 2; idxJira = 3; startIdx = 0;
   }
 
   let imported = 0, queued = 0, skipped = 0;
@@ -450,10 +516,12 @@ function importCSVText(text) {
     const name = (cols[idxName] || '').toString().trim();
     const daysRaw = (cols[idxDays] || '').toString().trim();
     const staffName = idxStaff >= 0 ? (cols[idxStaff] || '').toString().trim() : '';
+    const jiraLink = idxJira >= 0 ? (cols[idxJira] || '').toString().trim() : '';
     const mandays = Math.max(1, Math.floor(parseFloat(daysRaw)) || 0);
     if (!name || mandays <= 0) { skipped++; continue; }
 
     const t = { id: uid('task'), name, mandays };
+    if (jiraLink) t.jira = jiraLink;
     state.tasks.push(t);
     if (staffName) {
       const s = getOrCreateStaffByName(staffName);
@@ -492,6 +560,9 @@ el.importFile?.addEventListener('change', (e) => {
   };
   reader.readAsText(file);
 });
+
+// Export CSV wiring
+byId('exportBtn')?.addEventListener('click', exportCSV);
 
 // Seed with sample data if empty
 if (state.tasks.length === 0 && state.staff.length === 0 && state.backlog.length === 0) {
