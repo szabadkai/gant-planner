@@ -564,19 +564,7 @@ el.importFile?.addEventListener('change', (e) => {
 // Export CSV wiring
 byId('exportBtn')?.addEventListener('click', exportCSV);
 
-// Seed with sample data if empty
-if (state.tasks.length === 0 && state.staff.length === 0 && state.backlog.length === 0) {
-  const sampleTasks = [
-    { name: 'Setup', mandays: 2 },
-    { name: 'Design', mandays: 3 },
-    { name: 'API', mandays: 4 },
-    { name: 'Frontend', mandays: 5 },
-    { name: 'QA', mandays: 2 },
-  ];
-  sampleTasks.forEach((t) => addTask(t.name, t.mandays));
-  addStaff('Alice');
-  addStaff('Bob');
-}
+// No automatic sample data seeding
 
 // Initial render
 renderAll();
