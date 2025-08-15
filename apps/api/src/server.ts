@@ -42,7 +42,8 @@ app.post('/api/auth/request-login', async (req, reply) => {
   
   // In a real app, you'd send this via email
   // For development, we'll log it to console
-  const magicLink = `http://localhost:3000/login?token=${token}`;
+  const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 4000}`;
+  const magicLink = `${frontendUrl}/login?token=${token}`;
   console.log(`\n🔗 Magic login link for ${body.email}:`);
   console.log(`${magicLink}\n`);
   
