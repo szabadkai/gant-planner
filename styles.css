@@ -58,7 +58,7 @@ body {
 }
 .panel { background: var(--panel); padding: 12px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; }
 .panel h2 { margin: 0 0 10px 0; font-size: 14px; color: var(--text-dim); font-weight: 600; }
-.row { display: flex; gap: 8px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
 .row input[type="text"], .row input[type="number"] { flex: 1; background: #101328; color: var(--text); border: 1px solid var(--border); padding: 6px 8px; border-radius: 8px; }
 button { background: var(--accent); color: white; border: none; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
 button:hover { filter: brightness(1.05); }
