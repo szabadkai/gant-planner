@@ -41,6 +41,35 @@ function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// Deterministic color from a string (for themes)
+function themeHue(str) {
+  if (!str) return null;
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h) + str.charCodeAt(i);
+    h |= 0; // keep 32-bit
+  }
+  h = h % 360;
+  if (h < 0) h += 360;
+  return h;
+}
+
+function applyThemeToBlock(el, theme) {
+  if (!theme) return;
+  const h = themeHue(theme);
+  if (h == null) return;
+  el.style.background = `linear-gradient(135deg, hsla(${h}, 70%, 60%, 0.28), hsla(${(h + 20) % 360}, 70%, 50%, 0.28))`;
+  el.style.borderColor = `hsl(${h}, 60%, 45%)`;
+}
+
+function applyThemeToCard(el, theme) {
+  if (!theme) return;
+  const h = themeHue(theme);
+  if (h == null) return;
+  el.style.background = `hsla(${h}, 70%, 40%, 0.20)`;
+  el.style.borderColor = `hsl(${h}, 60%, 35%)`;
+}
+
 // Build an array of Date objects for N working/continuous days starting at startDate
 function buildDateAxis(startISO, count, skipWeekends) {
   const res = [];
@@ -81,12 +110,14 @@ const el = {
   staffList: byId("staffList"),
   taskName: byId("taskName"),
   taskDays: byId("taskDays"),
+  taskTheme: byId("taskTheme"),
   addTaskBtn: byId("addTaskBtn"),
   importBtn: byId("importBtn"),
   importFile: byId("importFile"),
   clearAll: byId("clearAll"),
   ganttHeader: byId("ganttHeader"),
   ganttBody: byId("ganttBody"),
+  themesPanel: byId("themesPanel"),
 };
 
 // Init inputs
@@ -106,9 +137,10 @@ updateLayoutVars();
 window.addEventListener('resize', updateLayoutVars);
 
 // --- Actions ---
-function addTask(name, mandays, jira) {
+function addTask(name, mandays, jira, theme) {
   const t = { id: uid("task"), name: name.trim(), mandays: Math.max(1, Math.floor(mandays)) };
   if (jira && typeof jira === 'string' && jira.trim()) t.jira = jira.trim();
+  if (theme && typeof theme === 'string' && theme.trim()) t.theme = theme.trim();
   state.tasks.push(t);
   state.backlog.unshift(t.id);
   saveState();
@@ -208,21 +240,103 @@ function renderBacklog() {
     card.dataset.taskId = t.id;
     // Show full task name on hover
     card.title = `${t.name}`;
-    card.innerHTML = `<span class="name">${escapeHTML(t.name)}</span>${t.jira ? `
-      <a class="jira" href="${escapeHTML(t.jira)}" target="_blank" rel="noopener noreferrer" title="Open Jira">↗</a>` : ''}
+    card.innerHTML = `<span class="name">${escapeHTML(t.name)}</span>
+      ${t.jira ? `<a class="jira" href="${escapeHTML(t.jira)}" target="_blank" rel="noopener noreferrer" title="Open Jira">↗</a>` : ''}
       <span class="days">${t.mandays}d</span>`;
     card.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", t.id);
       e.dataTransfer.effectAllowed = "move";
     });
     card.addEventListener("dblclick", () => removeTaskCompletely(t.id));
+    // Theme coloring on backlog card
+    applyThemeToCard(card, t.theme);
     // Prevent link click from triggering card actions
     card.querySelector('.jira')?.addEventListener('click', (e) => e.stopPropagation());
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startEditTask(card, t);
+    });
+    card.appendChild(editBtn);
     el.backlog.appendChild(card);
   });
 
   // Allow dropping back tasks
   makeDroppable(el.backlog, (taskId) => returnTaskToBacklog(taskId));
+}
+
+// --- Edit Task (Backlog sidebar) ---
+function startEditTask(card, t) {
+  card.classList.add('editing');
+  card.draggable = false;
+  // Clear existing content
+  card.innerHTML = '';
+
+  const form = document.createElement('div');
+  form.className = 'task-edit';
+
+  const name = document.createElement('input');
+  name.type = 'text';
+  name.placeholder = 'Task name';
+  name.value = t.name || '';
+
+  const days = document.createElement('input');
+  days.type = 'number';
+  days.min = '1';
+  days.value = String(t.mandays || 1);
+
+  const theme = document.createElement('input');
+  theme.type = 'text';
+  theme.placeholder = 'Theme';
+  theme.value = t.theme || '';
+
+  const jira = document.createElement('input');
+  jira.type = 'url';
+  jira.placeholder = 'Jira URL';
+  jira.value = t.jira || '';
+
+  const actions = document.createElement('div');
+  actions.className = 'task-edit-actions';
+
+  const save = document.createElement('button');
+  save.textContent = 'Save';
+  save.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const newName = name.value.trim();
+    const newDays = Math.max(1, Math.floor(parseInt(days.value, 10) || 1));
+    const newTheme = theme.value.trim();
+    const newJira = jira.value.trim();
+    if (!newName) { alert('Name is required'); return; }
+    // Apply changes
+    const task = taskById(t.id);
+    if (!task) return;
+    task.name = newName;
+    task.mandays = newDays;
+    task.theme = newTheme || undefined;
+    task.jira = newJira || undefined;
+    saveState();
+    renderAll();
+  });
+
+  const cancel = document.createElement('button');
+  cancel.className = 'secondary';
+  cancel.textContent = 'Cancel';
+  cancel.addEventListener('click', (e) => { e.stopPropagation(); renderAll(); });
+
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+
+  form.appendChild(name);
+  form.appendChild(days);
+  form.appendChild(theme);
+  form.appendChild(jira);
+  form.appendChild(actions);
+
+  card.appendChild(form);
 }
 
 function renderStaffList() {
@@ -287,9 +401,10 @@ function renderGantt(axis) {
       block.className = "block";
       block.style.left = `calc(${startIdx} * var(--cell-width))`;
       block.style.width = `calc(${t.mandays} * var(--cell-width))`;
-      block.title = `${t.name} (${t.mandays}d)`;
-      block.innerHTML = `<span>${escapeHTML(t.name)}</span><span class="meta">${t.mandays}d</span>${t.jira ? `
-        <a class=\"jira\" href=\"${escapeHTML(t.jira)}\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Open Jira\">↗</a>` : ''}`;
+      block.title = `${t.name} (${t.mandays}d${t.theme ? ', ' + t.theme : ''})`;
+      block.innerHTML = `<span>${escapeHTML(t.name)}</span>
+        <span class=\"meta\">${t.mandays}d</span>
+        ${t.jira ? `<a class=\"jira\" href=\"${escapeHTML(t.jira)}\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Open Jira\">↗</a>` : ''}`;
       block.dataset.taskId = t.id;
 
       block.addEventListener("click", () => returnTaskToBacklog(t.id));
@@ -298,6 +413,8 @@ function renderGantt(axis) {
         e.dataTransfer.setData("text/plain", t.id);
         e.dataTransfer.effectAllowed = "move";
       });
+      // Apply theme coloring to block
+      applyThemeToBlock(block, t.theme);
       // Prevent link click from returning task to backlog
       block.querySelector('.jira')?.addEventListener('click', (e) => e.stopPropagation());
 
@@ -324,6 +441,67 @@ function renderAll() {
   renderBacklog();
   renderStaffList();
   renderGantt(axis);
+  renderThemesSummary();
+}
+
+// --- Themes Summary ---
+function renderThemesSummary() {
+  const container = el.themesPanel;
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Aggregate mandays by theme
+  const map = new Map();
+  let maxDays = 0;
+  let totalItems = 0;
+  for (const t of state.tasks) {
+    const key = (t.theme || '').trim();
+    if (!key) continue; // skip unthemed for now
+    const days = Math.max(1, Math.floor(t.mandays || 0));
+    const cur = map.get(key) || { theme: key, days: 0, count: 0 };
+    cur.days += days; cur.count += 1;
+    map.set(key, cur);
+    if (cur.days > maxDays) maxDays = cur.days;
+    totalItems++;
+  }
+
+  if (map.size === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'theme-empty';
+    empty.textContent = 'No themes yet';
+    container.appendChild(empty);
+    return;
+  }
+
+  const items = Array.from(map.values()).sort((a, b) => b.days - a.days);
+  for (const item of items) {
+    const row = document.createElement('div');
+    row.className = 'theme-row';
+
+    const name = document.createElement('div');
+    name.className = 'theme-name';
+    name.textContent = item.theme;
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'theme-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'theme-bar';
+    const pct = maxDays ? Math.round((item.days / maxDays) * 100) : 0;
+    bar.style.width = pct + '%';
+    // Colorize bar using same theme color mapping
+    const hue = themeHue(item.theme);
+    bar.style.background = `linear-gradient(90deg, hsla(${hue},70%,60%,0.9), hsla(${(hue+20)%360},70%,50%,0.9))`;
+    barWrap.appendChild(bar);
+
+    const days = document.createElement('div');
+    days.className = 'theme-days';
+    days.textContent = `${item.days}d`;
+
+    row.appendChild(name);
+    row.appendChild(barWrap);
+    row.appendChild(days);
+    container.appendChild(row);
+  }
 }
 
 // --- CSV Export ---
@@ -340,28 +518,28 @@ function buildExportRows() {
   // Backlog tasks first
   state.backlog.forEach((id) => {
     const t = taskById(id); if (!t) return; seen.add(id);
-    rows.push([t.name, t.mandays, '', t.jira || '']);
+    rows.push([t.name, t.mandays, '', t.theme || '', t.jira || '']);
   });
 
   // Assigned tasks by staff and queue order
   state.staff.forEach((s) => {
     s.queue.forEach((id) => {
       const t = taskById(id); if (!t) return; seen.add(id);
-      rows.push([t.name, t.mandays, s.name, t.jira || '']);
+      rows.push([t.name, t.mandays, s.name, t.theme || '', t.jira || '']);
     });
   });
 
   // Any remaining tasks (if any)
   state.tasks.forEach((t) => {
     if (seen.has(t.id)) return;
-    rows.push([t.name, t.mandays, '', t.jira || '']);
+    rows.push([t.name, t.mandays, '', t.theme || '', t.jira || '']);
   });
 
   return rows;
 }
 
 function exportCSV() {
-  const header = ['name', 'mandays', 'staff', 'jira'];
+  const header = ['name', 'mandays', 'staff', 'theme', 'jira'];
   const rows = buildExportRows();
   const lines = [header, ...rows].map((r) => r.map(csvEscape).join(','));
   const csv = lines.join('\r\n');
@@ -398,10 +576,12 @@ function makeDroppable(element, onDrop, highlightEl) {
 el.addTaskBtn.addEventListener("click", () => {
   const name = el.taskName.value.trim();
   const days = parseInt(el.taskDays.value, 10) || 1;
+  const theme = (el.taskTheme?.value || '').trim();
   if (!name) return;
-  addTask(name, days);
+  addTask(name, days, undefined, theme);
   el.taskName.value = "";
   el.taskDays.value = "1";
+  if (el.taskTheme) el.taskTheme.value = "";
   el.taskName.focus();
 });
 
@@ -494,11 +674,14 @@ function importCSVText(text) {
   let idxName = normed.indexOf('name');
   let idxDays = normed.indexOf('mandays');
   let idxStaff = normed.indexOf('staff');
+  // Theme support
+  const themeAliases = new Set(['theme','epic']);
+  let idxTheme = normed.findIndex((h) => themeAliases.has(h));
   const jiraAliases = new Set(['jira','jiralink','jiraurl','url','link']);
   let idxJira = normed.findIndex((h) => jiraAliases.has(h));
   // If header not detected, assume first row is data with [name, mandays, staff?]
   if (idxName === -1 && idxDays === -1) {
-    idxName = 0; idxDays = 1; idxStaff = 2; idxJira = 3; startIdx = 0;
+    idxName = 0; idxDays = 1; idxStaff = 2; idxJira = 3; idxTheme = 4; startIdx = 0;
   }
 
   let imported = 0, queued = 0, skipped = 0;
@@ -517,11 +700,13 @@ function importCSVText(text) {
     const daysRaw = (cols[idxDays] || '').toString().trim();
     const staffName = idxStaff >= 0 ? (cols[idxStaff] || '').toString().trim() : '';
     const jiraLink = idxJira >= 0 ? (cols[idxJira] || '').toString().trim() : '';
+    const themeVal = idxTheme >= 0 ? (cols[idxTheme] || '').toString().trim() : '';
     const mandays = Math.max(1, Math.floor(parseFloat(daysRaw)) || 0);
     if (!name || mandays <= 0) { skipped++; continue; }
 
     const t = { id: uid('task'), name, mandays };
     if (jiraLink) t.jira = jiraLink;
+    if (themeVal) t.theme = themeVal;
     state.tasks.push(t);
     if (staffName) {
       const s = getOrCreateStaffByName(staffName);

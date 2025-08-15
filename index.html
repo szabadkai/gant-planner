@@ -32,6 +32,7 @@
           <div class="row">
             <input id="taskName" type="text" placeholder="Task name" />
             <input id="taskDays" type="number" min="1" value="1" />
+            <input id="taskTheme" type="text" placeholder="Theme (optional)" />
             <button id="addTaskBtn">Add</button>
           </div>
         </section>
@@ -44,6 +45,10 @@
             <a id="downloadSample" href="sample.csv" download>Download sample.csv</a>
           </div>
           <div id="backlog" class="list droplist"></div>
+        </section>
+        <section class="panel">
+          <h2>Themes</h2>
+          <div id="themesPanel" class="themes"></div>
         </section>
         <section class="panel">
           <h2>Add Staff</h2>
