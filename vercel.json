@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "builds": [
     {
       "src": "apps/web/package.json",
@@ -9,14 +11,14 @@
       }
     },
     {
-      "src": "api/index.ts",
+      "src": "apps/api/src/server.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.ts"
+      "dest": "/apps/api/src/server.ts"
     },
     {
       "src": "/(.*)",
@@ -24,7 +26,7 @@
     }
   ],
   "functions": {
-    "api/index.ts": {
+    "apps/api/src/server.ts": {
       "maxDuration": 30
     }
   }

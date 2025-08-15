@@ -13,11 +13,17 @@ function getAuthHeaders(): HeadersInit {
 
 export const api = {
     // Auth endpoints
-    login: (email: string): Promise<{ user: { id: string; email: string; name: string | null } }> =>
-        fetch("/api/auth/login", {
+    requestLogin: (email: string): Promise<{ message: string }> =>
+        fetch("/api/auth/request-login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
+        }).then(j),
+    verifyToken: (token: string): Promise<{ user: { id: string; email: string; name: string | null } }> =>
+        fetch("/api/auth/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token }),
         }).then(j),
     me: (): Promise<{ user: { id: string; email: string; name: string | null } }> =>
         fetch("/api/auth/me", {
@@ -100,5 +106,21 @@ export const api = {
         fetch('/api/share', {
             method: 'POST',
             headers: getAuthHeaders()
-        }).then(j),
+        }).then(j<{ token: string }>),
+    
+    // Shared (public) endpoints - no auth required
+    getSharedStaff: (token: string): Promise<Staff[]> =>
+        fetch(`/api/share/${token}/staff`).then(j<Staff[]>),
+    
+    getSharedTasks: (token: string, params?: { staff_id?: string; unassigned?: boolean }): Promise<Task[]> => {
+        const query = new URLSearchParams();
+        if (params?.staff_id) query.set('staff_id', params.staff_id);
+        if (params?.unassigned) query.set('unassigned', 'true');
+        const queryString = query.toString();
+        const url = `/api/share/${token}/tasks${queryString ? `?${queryString}` : ''}`;
+        return fetch(url).then(j<Task[]>);
+    },
+    
+    getSharedThemesSummary: (token: string): Promise<{ theme: string; totalMandays: number; count: number }[]> =>
+        fetch(`/api/share/${token}/themes/summary`).then(j<{ theme: string; totalMandays: number; count: number }[]>),
 };

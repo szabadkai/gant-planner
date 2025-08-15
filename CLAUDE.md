@@ -96,9 +96,29 @@ Tasks use decimal positioning within staff queues to enable efficient drag-and-d
 ### React Frontend Architecture
 
 - Uses @dnd-kit for drag-and-drop interactions
-- React Query for API state management
+- React Query (@tanstack/react-query) for API state management
 - Date-fns for working day calculations
 - Papa Parse for CSV handling
+- React Router for authentication flow
+- Vite with proxy configuration (API at port 4000, web at port 5173)
+
+### API Backend Architecture
+
+- Fastify web framework with TypeScript
+- Prisma ORM with SQLite database
+- Multi-tenant architecture with User-based data isolation
+- Magic link authentication system (development mode logs links to console)
+- Zod for request validation with custom error handling
+- CORS enabled for cross-origin requests
+
+### Multi-Tenant Data Model
+
+The modern implementation supports multiple users with data isolation:
+
+- User authentication via magic links and verification tokens
+- All tasks, staff, and assignments are scoped to user accounts
+- Share links for public/read-only access with snapshots
+- Database cascading deletes ensure data consistency
 
 ### Legacy App Features
 
@@ -110,3 +130,12 @@ The single-file implementation includes advanced features like:
 - Local state persistence and CSV import/export
 
 Both implementations support the same core workflow: create tasks and staff, drag tasks onto staff timelines for automatic sequential scheduling.
+
+## Authentication Flow
+
+The modern React app uses a magic link authentication system:
+
+1. User enters email address
+2. API generates verification token and logs magic link to console (development)
+3. User clicks link to authenticate and receive userId in localStorage
+4. Subsequent API requests include userId for data scoping

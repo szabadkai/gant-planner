@@ -1,5 +1,6 @@
 import Board from './components/Board';
 import Login from './components/Login';
+import ShareModal from './components/ShareModal';
 import { useState, useEffect } from 'react';
 import { api } from './api';
 
@@ -11,6 +12,7 @@ export default function App() {
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [zoom, setZoom] = useState(28);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Check for existing auth on app load
   useEffect(() => {
@@ -70,6 +72,24 @@ export default function App() {
               {user.name || user.email}
             </span>
             <button 
+              onClick={() => setShowShareModal(true)}
+              style={{ 
+                padding: '6px 8px', 
+                fontSize: '0.875rem',
+                background: 'transparent',
+                border: '1px solid var(--border)',
+                borderRadius: '4px',
+                color: 'var(--text-dim)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="Share project"
+            >
+              📤 Share
+            </button>
+            <button 
               onClick={handleLogout}
               style={{ 
                 padding: '4px 8px', 
@@ -87,6 +107,7 @@ export default function App() {
         </div>
       </div>
       <Board startDate={startDate} skipWeekends={skipWeekends} zoom={zoom} />
+      {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
     </div>
   );
 }
