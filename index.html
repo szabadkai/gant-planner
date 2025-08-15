@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gantt Queue Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Gantt Queue Planner</h1>
+      <div class="controls">
+        <label>
+          Start date
+          <input id="startDate" type="date" />
+        </label>
+        <label class="checkbox">
+          <input id="skipWeekends" type="checkbox" checked />
+          Skip weekends
+        </label>
+        <label>
+          Zoom
+          <input id="zoom" type="range" min="20" max="60" value="32" />
+        </label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2>Add Task</h2>
+          <div class="row">
+            <input id="taskName" type="text" placeholder="Task name" />
+            <input id="taskDays" type="number" min="1" value="1" />
+            <button id="addTaskBtn">Add</button>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>Backlog</h2>
+          <div class="row" style="margin-bottom:8px">
+            <button id="importBtn">Import CSV</button>
+            <input id="importFile" type="file" accept=".csv,text/csv" style="display:none" />
+            <a id="downloadSample" href="sample.csv" download>Download sample.csv</a>
+          </div>
+          <div id="backlog" class="list droplist"></div>
+        </section>
+        <section class="panel">
+          <h2>Add Staff</h2>
+          <div class="row">
+            <input id="staffName" type="text" placeholder="Name" />
+            <button id="addStaffBtn">Add</button>
+          </div>
+          <div id="staffList" class="list staff-list"></div>
+        </section>
+      </aside>
+
+      <section class="gantt-area">
+        <div class="gantt-header" id="ganttHeader"></div>
+        <div class="gantt-body" id="ganttBody"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <button id="clearAll" class="danger">Clear All</button>
+      <span class="hint">Tip: Drag tasks from Backlog onto a staff row to queue them. Click a task to return it to backlog.</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+  </html>
