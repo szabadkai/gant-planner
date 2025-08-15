@@ -2,7 +2,7 @@ import { Task, Staff, ID } from "./types";
 
 async function j<T>(res: Response): Promise<T> {
     if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return res.json() as Promise<T>;
 }
 
 // Auth headers helper
@@ -18,36 +18,36 @@ export const api = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
-        }).then(j),
+        }).then((res) => j<{ message: string }>(res)),
     verifyToken: (token: string): Promise<{ user: { id: string; email: string; name: string | null } }> =>
         fetch("/api/auth/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token }),
-        }).then(j),
+        }).then((res) => j<{ user: { id: string; email: string; name: string | null } }>(res)),
     me: (): Promise<{ user: { id: string; email: string; name: string | null } }> =>
         fetch("/api/auth/me", {
             headers: getAuthHeaders(),
-        }).then(j),
+        }).then((res) => j<{ user: { id: string; email: string; name: string | null } }>(res)),
     
     health: () => fetch("/api/health").then((r) => r.json()),
     listStaff: (): Promise<Staff[]> => 
-        fetch("/api/staff", { headers: getAuthHeaders() }).then(j),
+        fetch("/api/staff", { headers: getAuthHeaders() }).then((res) => j<Staff[]>(res)),
     createStaff: (name: string): Promise<Staff> =>
         fetch("/api/staff", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getAuthHeaders() },
             body: JSON.stringify({ name }),
-        }).then(j),
+        }).then((res) => j<Staff>(res)),
     deleteStaff: (id: ID): Promise<{ ok: true }> =>
         fetch(`/api/staff/${id}`, { 
             method: "DELETE",
             headers: getAuthHeaders()
-        }).then(j),
+        }).then((res) => j<{ ok: true }>(res)),
     listBacklog: (): Promise<Task[]> =>
-        fetch("/api/tasks?unassigned=true", { headers: getAuthHeaders() }).then(j),
+        fetch("/api/tasks?unassigned=true", { headers: getAuthHeaders() }).then((res) => j<Task[]>(res)),
     listTasksFor: (staffId: ID): Promise<Task[]> =>
-        fetch(`/api/tasks?staff_id=${encodeURIComponent(staffId)}`, { headers: getAuthHeaders() }).then(j),
+        fetch(`/api/tasks?staff_id=${encodeURIComponent(staffId)}`, { headers: getAuthHeaders() }).then((res) => j<Task[]>(res)),
     createTask: (input: {
         name: string;
         mandays: number;
@@ -58,7 +58,7 @@ export const api = {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getAuthHeaders() },
             body: JSON.stringify(input),
-        }).then(j),
+        }).then((res) => j<Task>(res)),
     updateTask: (
         id: ID,
         patch: Partial<Pick<Task, "name" | "mandays" | "jiraUrl" | "theme">>
@@ -67,12 +67,12 @@ export const api = {
             method: "PATCH",
             headers: { "Content-Type": "application/json", ...getAuthHeaders() },
             body: JSON.stringify(patch),
-        }).then(j),
+        }).then((res) => j<Task>(res)),
     deleteTask: (id: ID): Promise<{ ok: true }> =>
         fetch(`/api/tasks/${id}`, { 
             method: "DELETE",
             headers: getAuthHeaders()
-        }).then(j),
+        }).then((res) => j<{ ok: true }>(res)),
     move: (input: {
         taskId: ID;
         targetStaffId: ID | null;
@@ -83,15 +83,15 @@ export const api = {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getAuthHeaders() },
             body: JSON.stringify(input),
-        }).then(j),
+        }).then((res) => j<any>(res)),
     themesSummary: (): Promise<
         { theme: string; totalMandays: number; count: number }[]
-    > => fetch("/api/themes/summary", { headers: getAuthHeaders() }).then(j),
+    > => fetch("/api/themes/summary", { headers: getAuthHeaders() }).then((res) => j<{ theme: string; totalMandays: number; count: number }[]>(res)),
     clearAll: (): Promise<{ ok: true }> => 
         fetch('/api/admin/clear', { 
             method: 'POST',
             headers: getAuthHeaders()
-        }).then(j),
+        }).then((res) => j<{ ok: true }>(res)),
     exportCsv: (): void => {
         const userId = localStorage.getItem('userId');
         if (!userId) {
