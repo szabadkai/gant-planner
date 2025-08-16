@@ -42,7 +42,7 @@ export default function App() {
     }
   }, [userError, hasUserId, queryClient]);
 
-  const handleLogin = (user: User) => {
+  const handleLogin = (user: { id: string; email: string; name: string | null; projectTitle: string | null }) => {
     queryClient.setQueryData(['user'], { user });
   };
 
@@ -60,7 +60,7 @@ export default function App() {
     if (!user) return;
     try {
       const response = await api.updateProjectTitle(titleValue.trim() || null);
-      setUser(response.user);
+      queryClient.setQueryData(['user'], { user: response.user });
       setEditingTitle(false);
     } catch (error) {
       console.error('Failed to update project title:', error);
@@ -79,7 +79,7 @@ export default function App() {
     }
   }, [user]);
 
-  if (loading) {
+  if (userLoading) {
     return (
       <div style={{ 
         minHeight: '100vh', 
