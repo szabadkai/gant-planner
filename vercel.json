@@ -8,5 +8,12 @@
                 "distDir": "dist"
             }
         }
-    ]
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "/apps/web/dist/$1"
+        }
+    ],
+    "cleanUrls": true
 }
