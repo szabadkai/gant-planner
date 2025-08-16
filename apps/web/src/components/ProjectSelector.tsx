@@ -7,6 +7,8 @@ export default function ProjectSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
 
   const { data: user } = useQuery({ queryKey: ['user'], queryFn: api.me });
   const { data: projects = [] } = useProjects();
@@ -53,7 +55,75 @@ export default function ProjectSelector() {
     }
   };
 
+  const handleTitleEdit = () => {
+    setTitleValue(currentProject?.title || '');
+    setIsEditingTitle(true);
+    setIsOpen(false);
+  };
+
+  const handleTitleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentProject) return;
+    
+    try {
+      await updateProject.mutateAsync({ id: currentProject.id, data: { title: titleValue.trim() } });
+      setIsEditingTitle(false);
+    } catch (error) {
+      console.error('Failed to update project title:', error);
+      alert('Failed to update project title');
+    }
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setTitleValue('');
+  };
+
   if (!user?.user) return null;
+
+  if (isEditingTitle) {
+    return (
+      <form onSubmit={handleTitleSave} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span>📁</span>
+        <input
+          type="text"
+          value={titleValue}
+          onChange={(e) => setTitleValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') handleTitleCancel();
+          }}
+          style={{
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            background: 'transparent',
+            border: '2px dashed var(--border)',
+            color: 'var(--text)',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            minWidth: '200px'
+          }}
+          placeholder="Enter project title..."
+          autoFocus
+        />
+        <button type="submit" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+          Save
+        </button>
+        <button 
+          type="button" 
+          onClick={handleTitleCancel} 
+          style={{ 
+            padding: '4px 8px', 
+            fontSize: '0.75rem', 
+            background: 'transparent', 
+            color: 'var(--text-dim)', 
+            border: '1px solid var(--border)' 
+          }}
+        >
+          Cancel
+        </button>
+      </form>
+    );
+  }
 
   return (
     <div style={{ position: 'relative' }}>
@@ -69,12 +139,23 @@ export default function ProjectSelector() {
           borderRadius: '6px',
           color: 'var(--text)',
           cursor: 'pointer',
-          fontSize: '14px',
+          fontSize: '1.2rem',
+          fontWeight: 'bold',
+          minWidth: 0,
+          maxWidth: '100%',
+          overflow: 'hidden',
         }}
       >
-        <span>📁</span>
-        <span>{currentProject?.title || 'No Project'}</span>
-        <span style={{ fontSize: '12px', opacity: 0.7 }}>▼</span>
+        <span style={{ flexShrink: 0 }}>📁</span>
+        <span style={{ 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          whiteSpace: 'nowrap',
+          minWidth: 0
+        }}>
+          {currentProject?.title || 'No Project'}
+        </span>
+        <span style={{ fontSize: '12px', opacity: 0.7, flexShrink: 0 }}>▼</span>
       </button>
 
       {isOpen && (
@@ -91,15 +172,41 @@ export default function ProjectSelector() {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
             zIndex: 1000,
             minWidth: '250px',
+            maxWidth: '90vw',
+            maxHeight: '70vh',
+            overflow: 'auto',
           }}
         >
           <div style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-dim)', fontWeight: 600, marginBottom: '6px' }}>
-              Switch Project
+              Project Actions
             </div>
+            {currentProject && (
+              <button
+                onClick={handleTitleEdit}
+                style={{
+                  width: '100%',
+                  padding: '6px',
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  borderRadius: '4px',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                ✏️ Edit Project Title
+              </button>
+            )}
           </div>
 
           <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-dim)', fontWeight: 600, padding: '6px 12px' }}>
+              Switch Project
+            </div>
             {projects.map((project) => (
               <div
                 key={project.id}

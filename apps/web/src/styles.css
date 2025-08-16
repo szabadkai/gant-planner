@@ -27,7 +27,7 @@
 html, body, #root { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text); }
 
-.layout { display: grid; grid-template-columns: 300px 1fr; gap: 12px; height: 100vh; padding: 12px; }
+.layout { display: grid; grid-template-columns: 300px 1fr; gap: 12px; height: 100vh}
 .sidebar { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
 .main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 
@@ -70,6 +70,180 @@ button:disabled { cursor: not-allowed; background: var(--disabled-bg); color: va
 .card a { color: var(--accent); text-decoration: none; font-weight: 700; }
 .card a:hover { text-decoration: underline; }
 
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  body { 
+    padding: 0; 
+    margin: 0;
+  }
+  .layout { 
+    grid-template-columns: 1fr; 
+    height: auto; 
+    gap: 8px;
+    padding: 0;
+  }
+  .sidebar { 
+    order: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 8px 8px 8px;
+  }
+  .main { 
+    order: 1;
+    min-height: 50vh;
+    padding: 0 8px;
+  }
+  .panel { 
+    padding: 6px;
+    min-width: 0;
+  }
+  .sidebar .panel {
+    flex: 1;
+    min-width: 280px;
+  }
+  .row {
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .row.no-wrap {
+    flex-wrap: wrap !important;
+  }
+  .row > input {
+    flex: 1 1 100px;
+    min-width: 90px;
+    padding: 4px 6px;
+    font-size: 14px;
+  }
+  .row > input[type="number"] {
+    flex: 0 0 60px;
+    min-width: 60px;
+  }
+  .row > input[type="date"] {
+    flex: 0 0 120px;
+    min-width: 120px;
+  }
+  .row > input[type="range"] {
+    flex: 1 1 80px;
+    min-width: 80px;
+  }
+  .row > label {
+    flex: 1 1 120px;
+    min-width: 100px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .row > button {
+    flex: 0 0 auto;
+    padding: 4px 6px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .staff-item {
+    padding: 4px 6px;
+  }
+  .staff-item .staff-name {
+    font-size: 13px;
+  }
+  .staff-item .remove {
+    padding: 2px 4px;
+    font-size: 11px;
+  }
+  .gantt-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+  }
+  .gantt-controls label {
+    font-size: 11px;
+  }
+  .gantt-controls input {
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+  /* Reduce gantt gutter on mobile */
+  :root {
+    --left-gutter: 100px;
+    --cell-width: 24px;
+    --row-height: 32px;
+  }
+  .gantt-header .col {
+    font-size: 9px;
+    padding: 3px 0;
+  }
+  .gantt-row .label {
+    padding-left: 4px;
+    padding-top: 6px;
+    font-size: 12px;
+    z-index: 10;
+    border-right: 1px solid var(--border);
+  }
+  .gantt-block {
+    top: 4px;
+    height: calc(var(--row-height) - 8px);
+    padding: 0 4px;
+    font-size: 11px;
+  }
+  .gantt-block .meta {
+    font-size: 10px;
+  }
+  /* Mobile-specific overrides for top bar */
+  .layout > div:first-child {
+    padding: 8px;
+  }
+  /* Better header spacing on mobile */
+  .layout > div:first-child > div:first-child {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+  .layout > div:first-child > div:first-child > div:last-child {
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  .layout > div:first-child > div:first-child > div:last-child > label {
+    font-size: 12px !important;
+  }
+  .layout > div:first-child > div:first-child > div:last-child > div {
+    gap: 6px !important;
+  }
+  /* Ensure task cards don't overflow */
+  .card {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .card span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Mobile file input styling */
+  input[type="file"] {
+    font-size: 12px !important;
+    padding: 3px 4px !important;
+  }
+}
+
+/* Tablet breakpoint */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .layout {
+    grid-template-columns: 280px 1fr;
+  }
+  .sidebar {
+    font-size: 12px;
+  }
+  .row > input {
+    flex: 1 1 100px;
+    min-width: 80px;
+  }
+  :root {
+    --left-gutter: 140px;
+    --cell-width: 26px;
+  }
+}
+
 /* Gantt */
 :root {
   --cell-width: 28px;
@@ -80,7 +254,7 @@ button:disabled { cursor: not-allowed; background: var(--disabled-bg); color: va
 .gantt-controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1); color: var(--text-dim); }
 .gantt-controls input[type="date"], .gantt-controls input[type="range"] { background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 4px 6px; border-radius: 6px; }
 .gantt-header { position: sticky; top: 0; background: var(--gantt-bg); border-bottom: 1px solid var(--border); display: flex; z-index: 1; width: max-content; }
-.gantt-header .gutter { flex: 0 0 var(--left-gutter); border-right: 1px solid var(--border); position: sticky; left: 0; background: var(--gantt-bg); z-index: 2; }
+.gantt-header .gutter { flex: 0 0 var(--left-gutter); border-right: 1px solid var(--border); position: sticky; left: 0; background: var(--gantt-bg); z-index: 11; }
 .gantt-header .col { width: var(--cell-width); flex: 0 0 var(--cell-width); text-align: center; padding: 6px 0; color: var(--text-dim); border-right: 1px solid var(--gantt-cell-border); font-size: 11px; }
 .gantt-header .col.week-start { border-left: 2px solid var(--border); }
 .gantt-body { position: relative; }
@@ -89,8 +263,36 @@ button:disabled { cursor: not-allowed; background: var(--disabled-bg); color: va
 .gantt-row .grid { position: absolute; top: 0; bottom: 0; left: var(--left-gutter); display: grid; grid-auto-flow: column; grid-auto-columns: var(--cell-width); width: max-content; }
 .gantt-row .grid .cell { border-right: 1px solid var(--gantt-cell-border); }
 .gantt-row .grid .cell.week-start { border-left: 2px solid var(--border); }
-.gantt-row .label { position: sticky; left: 0; top: 0; padding-left: 8px; padding-top: 8px; color: var(--text-dim); font-weight: 600; width: var(--left-gutter); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--gantt-bg); z-index: 1; }
-.gantt-row .blocks { position: absolute; top: 0; bottom: 0; left: var(--left-gutter); width: max-content; }
+.gantt-row .label { 
+  position: sticky; 
+  left: 0; 
+  top: 0; 
+  bottom: 0; 
+  padding-left: 8px; 
+  padding-top: 8px; 
+  color: var(--text-dim); 
+  font-weight: 600; 
+  width: var(--left-gutter); 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  background: var(--gantt-bg); 
+  z-index: 10; 
+  border-right: 1px solid var(--border); 
+  height: 100%; 
+  box-sizing: border-box;
+}
+.gantt-row .label::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gantt-bg);
+  z-index: -1;
+}
+.gantt-row .blocks { position: absolute; top: 0; bottom: 0; left: var(--left-gutter); width: max-content; z-index: 1; }
 .gantt-row.drag-over { 
   outline: 2px dashed var(--accent-2); 
   outline-offset: -2px; 
@@ -146,7 +348,7 @@ button:disabled { cursor: not-allowed; background: var(--disabled-bg); color: va
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(91, 140, 255, 0.3);
   filter: brightness(1.1) contrast(1.05);
-  z-index: 1000;
+  z-index: 5;
   /* Subtle glow effect */
   box-shadow: 
     0 4px 12px rgba(91, 140, 255, 0.3),

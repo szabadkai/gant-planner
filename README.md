@@ -1,17 +1,14 @@
-Gantt Queue Planner
-====================
+# Gantt Queue Planner
 
 Lightweight, dependency-free web app to create a simple Gantt chart by dragging tasks (with a manday duration) into a staff member’s queue. Tasks auto-schedule sequentially per staff, starting from a chosen project start date.
 
-Quick Start
------------
+## Quick Start
 
 1. Open `index.html` in your browser.
 2. Use the left sidebar to add tasks and staff.
 3. Drag tasks from Backlog onto a staff row to queue and schedule them.
 
-Features
---------
+## Features
 
 - Drag-and-drop tasks from Backlog into staff rows.
 - Auto-queue: dropped tasks are appended and scheduled after existing ones.
@@ -23,43 +20,37 @@ Features
 - LocalStorage persistence (your plan stays after refresh).
 - Import tasks from CSV with optional staff assignment.
 
-Concepts & Assumptions
-----------------------
+## Concepts & Assumptions
 
 - One task consumes one full working day per manday, per staff member.
 - Each staff member has capacity 1 task/day; tasks queue sequentially.
 - Weekend skipping: when enabled, the header labels and day units skip Sat/Sun.
 - The chart auto-extends to fit the longest staff queue (minimum 30 days).
 
-Tips
-----
+## Tips
 
 - Double-click a backlog task to delete it entirely.
 - Use the Zoom slider to fit more or fewer days on screen.
 - Use the Clear All button to reset the plan (keeps current zoom and date input value).
 
-Limitations (by design for simplicity)
---------------------------------------
+## Limitations (by design for simplicity)
 
 - No partial days; durations are whole days.
 - No overlap or parallelism per staff (strict FIFO queue).
 - No dependencies between tasks.
 - No export yet (you can print or take a screenshot).
 
-Project Structure
------------------
+## Project Structure
 
 - `index.html` – UI layout and controls
 - `styles.css` – Styling and Gantt visualization
 - `app.js` – State, persistence, drag-and-drop, scheduling, rendering
 
-License
--------
+## License
 
 This project is provided as-is without warranty. You can adapt it freely within your environment.
 
-CSV Import
-----------
+## CSV Import
 
 Use the “Import CSV” button in the Backlog panel. CSV supports a header row with the following columns (case-insensitive):
 
@@ -83,12 +74,12 @@ Design,3
 API,4,Bob
 
 Behavior:
+
 - Missing or invalid rows are skipped.
 - If `staff` is provided and doesn’t exist yet, a staff member is created automatically and the task is queued to them.
 - Otherwise, tasks are added to the Backlog.
 
-Sample CSV
-----------
+## Sample CSV
 
 - A ready-made file is included: `sample.csv` (also downloadable via the app next to the Import button).
 

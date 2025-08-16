@@ -2,6 +2,7 @@ import Board from './components/Board';
 import Login from './components/Login';
 import ShareModal from './components/ShareModal';
 import ProjectSelector from './components/ProjectSelector';
+import NoProject from './components/NoProject';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
@@ -12,8 +13,6 @@ export default function App() {
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [zoom, setZoom] = useState(28);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [titleValue, setTitleValue] = useState('');
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   const queryClient = useQueryClient();
@@ -42,7 +41,7 @@ export default function App() {
     }
   }, [userError, hasUserId, queryClient]);
 
-  const handleLogin = (user: { id: string; email: string; name: string | null; projectTitle: string | null }) => {
+  const handleLogin = (user: User) => {
     localStorage.setItem('userId', user.id);
     queryClient.setQueryData(['user'], { user });
   };
@@ -52,33 +51,6 @@ export default function App() {
     queryClient.clear();
   };
 
-  const handleTitleEdit = () => {
-    setTitleValue(user?.projectTitle || '');
-    setEditingTitle(true);
-  };
-
-  const handleTitleSave = async () => {
-    if (!user) return;
-    try {
-      const response = await api.updateProjectTitle(titleValue.trim() || null);
-      queryClient.setQueryData(['user'], { user: response.user });
-      setEditingTitle(false);
-    } catch (error) {
-      console.error('Failed to update project title:', error);
-    }
-  };
-
-  const handleTitleCancel = () => {
-    setEditingTitle(false);
-    setTitleValue('');
-  };
-
-  // Update titleValue when user changes
-  useEffect(() => {
-    if (user) {
-      setTitleValue(user.projectTitle || '');
-    }
-  }, [user]);
 
   if (userLoading) {
     return (
@@ -98,71 +70,101 @@ export default function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  if (!user.currentProject) {
+    return (
+      <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ 
+          position: 'absolute', 
+          top: 16, 
+          right: 16, 
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16
+        }}>
+          <ProjectSelector />
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              padding: '4px 8px', 
+              fontSize: '0.75rem',
+              background: 'transparent',
+              border: '1px solid var(--border)',
+              borderRadius: '4px',
+              color: 'var(--text-dim)',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
+        </div>
+        <NoProject />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 16, fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        {editingTitle ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              type="text"
-              value={titleValue}
-              onChange={(e) => setTitleValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleTitleSave();
-                if (e.key === 'Escape') handleTitleCancel();
-              }}
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                background: 'transparent',
-                border: '2px dashed var(--border)',
-                color: 'var(--text)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                minWidth: '250px'
-              }}
-              placeholder="Enter project title..."
-              autoFocus
-            />
-            <button onClick={handleTitleSave} style={{ padding: '6px 12px', fontSize: '0.875rem' }}>
-              Save
-            </button>
-            <button onClick={handleTitleCancel} style={{ padding: '6px 12px', fontSize: '0.875rem', background: 'transparent', color: 'var(--text-dim)', border: '1px solid var(--border)' }}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <h1 
-            style={{ 
-              margin: 0, 
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}
-            onClick={handleTitleEdit}
-            title="Click to edit project title"
-          >
-            {user?.projectTitle || "Levi's Gantt Queue Planner"}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 16,
+        marginBottom: 12 
+      }}>
+        <div style={{ flex: '1', minWidth: 0 }}>
+          <ProjectSelector />
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 16, 
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end'
+        }}>
+          <label style={{ 
+            color: 'var(--text-dim)', 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 6,
+            whiteSpace: 'nowrap',
+            fontSize: '0.875rem'
+          }}>
+            Start <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </label>
+          <label style={{ 
+            color: 'var(--text-dim)', 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 6,
+            whiteSpace: 'nowrap',
+            fontSize: '0.875rem'
+          }}>
+            <input type="checkbox" checked={skipWeekends} onChange={(e) => setSkipWeekends(e.target.checked)} /> 
+            Skip weekends
+          </label>
+          <label style={{ 
+            color: 'var(--text-dim)', 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 6,
+            whiteSpace: 'nowrap',
+            fontSize: '0.875rem'
+          }}>
+            Zoom <input type="range" min={20} max={60} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+          </label>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <span style={{ 
-              fontSize: '0.75rem', 
               color: 'var(--text-dim)', 
-              opacity: 0.5,
-              fontWeight: 'normal'
+              fontSize: '0.875rem',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '120px'
             }}>
-              [edit]
-            </span>
-          </h1>
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div className="row no-wrap" style={{ marginBottom: 0 }}>
-            <label style={{ color: 'var(--text-dim)', flex: '0 0 auto' }}>Start <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>
-            <label style={{ color: 'var(--text-dim)', display: 'inline-flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}><input type="checkbox" checked={skipWeekends} onChange={(e) => setSkipWeekends(e.target.checked)} /> Skip weekends</label>
-            <label style={{ color: 'var(--text-dim)', flex: '0 0 auto' }}>Zoom <input type="range" min={20} max={60} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} /></label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>
               {user.name || user.email}
             </span>
             <button 
@@ -177,7 +179,8 @@ export default function App() {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '4px',
+                whiteSpace: 'nowrap'
               }}
               title="Share project"
             >
@@ -192,7 +195,8 @@ export default function App() {
                 border: '1px solid var(--border)',
                 borderRadius: '4px',
                 color: 'var(--text-dim)',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Logout
@@ -200,7 +204,9 @@ export default function App() {
           </div>
         </div>
       </div>
+      
       <Board startDate={startDate} skipWeekends={skipWeekends} zoom={zoom} />
+      
       {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
     </div>
   );

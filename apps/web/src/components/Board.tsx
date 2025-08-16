@@ -155,7 +155,6 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
             <h2>Backlog</h2>
             <AddTaskForm />
             <div className="row" style={{ marginTop: 4 }}>
-              <button onClick={() => { window.open('/api/export/csv', '_blank'); }}>Download CSV (API)</button>
               <button onClick={async () => {
                 const rows: any[] = [];
                 (backlog ?? []).forEach(t => rows.push({ name: t.name, mandays: t.mandays, staff: '', theme: t.theme || '', jira: t.jiraUrl || '' }));

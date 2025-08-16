@@ -149,3 +149,18 @@ The modern React app uses a magic link authentication system:
 2. API generates verification token and logs magic link to console (development)
 3. User clicks link to authenticate and receive userId in localStorage
 4. Subsequent API requests include userId for data scoping
+
+## Development Workflow
+
+### Git Commit Policy
+
+**IMPORTANT**: After completing each task or feature request, Claude must create a git commit with a short, meaningful commit message that describes what was accomplished. This ensures proper version control and project history tracking.
+
+- Commit after completing each distinct task or feature
+- Use concise, descriptive commit messages (present tense, under 50 characters)
+- Include the Claude Code attribution footer in commit messages
+- Examples of good commit messages:
+  - "Add multi-project support with project selector"
+  - "Implement week separation in Gantt chart"
+  - "Unify project title and selector interface"
+  - "Fix Enter key submission for all forms"

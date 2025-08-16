@@ -785,6 +785,11 @@ app.get("/api/export/csv", async (req: any, reply) => {
 
 // --- Sharing ---
 app.post("/api/share", { preHandler: requireAuth }, async (req: any, reply) => {
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return reply.badRequest("No current project selected");
+    }
+    
     const token = randomUUID();
     const link = await prisma.shareLink.create({
         data: {
@@ -793,6 +798,7 @@ app.post("/api/share", { preHandler: requireAuth }, async (req: any, reply) => {
             permission: "view",
             viewParams: null,
             createdBy: req.userId,
+            projectId: currentProject.id,
         },
     });
     return { token };
@@ -814,7 +820,10 @@ app.get("/api/share/:token/staff", async (req) => {
     const { token } = req.params as any;
     const share = await ensureShare(token);
     const staff = await prisma.staff.findMany({
-        where: { userId: share.createdBy },
+        where: { 
+            userId: share.createdBy,
+            projectId: share.projectId 
+        },
         orderBy: { name: "asc" },
     });
     return staff;
@@ -823,11 +832,11 @@ app.get("/api/share/:token/staff", async (req) => {
 app.get("/api/share/:token/project", async (req) => {
     const { token } = req.params as any;
     const share = await ensureShare(token);
-    const user = await prisma.user.findUnique({
-        where: { id: share.createdBy },
-        select: { projectTitle: true },
-    });
-    return { projectTitle: user?.projectTitle || null };
+    const project = share.projectId ? await prisma.project.findUnique({
+        where: { id: share.projectId },
+        select: { title: true },
+    }) : null;
+    return { projectTitle: project?.title || null };
 });
 
 app.get("/api/share/:token/tasks", async (req) => {
@@ -847,7 +856,10 @@ app.get("/api/share/:token/tasks", async (req) => {
         const assigns = await prisma.assignment.findMany({
             where: {
                 ...whereAssign,
-                task: { userId: share.createdBy },
+                task: { 
+                    userId: share.createdBy,
+                    projectId: share.projectId 
+                },
             },
             orderBy: { position: "asc" },
             select: { taskId: true },
@@ -857,6 +869,7 @@ app.get("/api/share/:token/tasks", async (req) => {
             where: {
                 id: { in: ids },
                 userId: share.createdBy,
+                projectId: share.projectId,
             },
             include,
         });
@@ -864,7 +877,10 @@ app.get("/api/share/:token/tasks", async (req) => {
         tasks = assigns.map((a) => map.get(a.taskId)!).filter(Boolean);
     } else {
         tasks = await prisma.task.findMany({
-            where: { userId: share.createdBy },
+            where: { 
+                userId: share.createdBy,
+                projectId: share.projectId 
+            },
             include,
         });
     }
@@ -878,7 +894,10 @@ app.get("/api/share/:token/themes/summary", async (req) => {
         by: ["theme"],
         _sum: { mandays: true },
         _count: true,
-        where: { userId: share.createdBy },
+        where: { 
+            userId: share.createdBy,
+            projectId: share.projectId 
+        },
     });
     return rows
         .filter((r) => (r.theme ?? "").trim() !== "")

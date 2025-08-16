@@ -7,12 +7,24 @@ export default function StaffPanel() {
   const { mutate: deleteStaff } = useDeleteStaff();
   const [name, setName] = useState('');
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      createStaff(name.trim());
+      setName('');
+    }
+  };
+
   return (
     <section>
-      <div className="row">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
-        <button onClick={() => { if (name.trim()) { createStaff(name.trim()); setName(''); } }}>Add</button>
-      </div>
+      <form onSubmit={handleSubmit} className="row">
+        <input 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
+          placeholder="Name" 
+        />
+        <button type="submit">Add</button>
+      </form>
       <ul className="staff-list">
         {(staff ?? []).map((s) => (
           <li key={s.id} className="staff-item">
