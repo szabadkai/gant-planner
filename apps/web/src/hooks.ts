@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
-import type { ID, Task, Staff } from './types';
+import type { ID, Task, Staff, Project } from './types';
 
 export function useStaff() {
   return useQuery<Staff[]>({ queryKey: ['staff'], queryFn: api.listStaff });
@@ -146,4 +146,51 @@ export function useAutoAssign() {
 
 export function useThemesSummary() {
   return useQuery({ queryKey: ['themes', 'summary'], queryFn: api.themesSummary });
+}
+
+// Project hooks
+export function useProjects() {
+  return useQuery<Project[]>({ queryKey: ['projects'], queryFn: api.listProjects });
+}
+
+export function useCreateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createProject,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['user'] });
+    },
+  });
+}
+
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { title?: string; isCurrent?: boolean } }) =>
+      api.updateProject(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['user'] });
+      // Invalidate all project-scoped data when switching projects
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['staff'] });
+      qc.invalidateQueries({ queryKey: ['themes'] });
+    },
+  });
+}
+
+export function useDeleteProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteProject,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['user'] });
+      // Invalidate all project-scoped data
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['staff'] });
+      qc.invalidateQueries({ queryKey: ['themes'] });
+    },
+  });
 }

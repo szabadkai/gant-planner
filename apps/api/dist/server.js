@@ -78,10 +78,11 @@ app.post("/api/auth/verify", async (req, reply) => {
             data: {
                 email: verificationToken.email,
                 name: verificationToken.email.split("@")[0],
+                projectTitle: null,
             },
         });
     }
-    return { user: { id: user.id, email: user.email, name: user.name } };
+    return { user: { id: user.id, email: user.email, name: user.name, projectTitle: user.projectTitle } };
 });
 app.get("/api/auth/me", async (req, reply) => {
     const userId = req.headers["x-user-id"];
@@ -90,13 +91,48 @@ app.get("/api/auth/me", async (req, reply) => {
             .status(401)
             .send({ error: "unauthorized", message: "No user ID provided" });
     }
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { currentProject: true }
+    });
     if (!user) {
         return reply
             .status(401)
             .send({ error: "unauthorized", message: "User not found" });
     }
-    return { user: { id: user.id, email: user.email, name: user.name } };
+    return {
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            projectTitle: user.projectTitle,
+            currentProject: user.currentProject,
+        },
+    };
+});
+app.patch("/api/auth/me", { preHandler: requireAuth }, async (req, reply) => {
+    const body = z
+        .object({
+        projectTitle: z
+            .string()
+            .trim()
+            .optional()
+            .or(z.literal(""))
+            .transform((v) => (v === "" ? null : v || null)),
+    })
+        .parse(req.body);
+    const updated = await prisma.user.update({
+        where: { id: req.userId },
+        data: { projectTitle: body.projectTitle },
+    });
+    return {
+        user: {
+            id: updated.id,
+            email: updated.email,
+            name: updated.name,
+            projectTitle: updated.projectTitle,
+        },
+    };
 });
 // Auth middleware helper
 function requireAuth(req, reply, done) {
@@ -110,6 +146,13 @@ function requireAuth(req, reply, done) {
     done();
 }
 // Helpers
+async function getCurrentProject(userId) {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { currentProject: true }
+    });
+    return user?.currentProject || null;
+}
 async function maxPosition(staffId) {
     const where = { staffId: staffId ?? null };
     const last = await prisma.assignment.findFirst({
@@ -126,15 +169,113 @@ function nextPosition(base) {
     // leave gaps to reduce reindexing
     return base + 1024;
 }
+// Project routes
+app.get("/api/projects", { preHandler: requireAuth }, async (req) => {
+    const projects = await prisma.project.findMany({
+        where: { userId: req.userId },
+        orderBy: { createdAt: "desc" },
+    });
+    return projects;
+});
+app.post("/api/projects", { preHandler: requireAuth }, async (req, reply) => {
+    const body = z
+        .object({ title: z.string().trim().min(1, "Title is required") })
+        .parse(req.body);
+    const project = await prisma.project.create({
+        data: {
+            title: body.title,
+            userId: req.userId,
+        },
+    });
+    // Set this as the user's current project
+    await prisma.user.update({
+        where: { id: req.userId },
+        data: { currentProjectId: project.id },
+    });
+    return project;
+});
+app.patch("/api/projects/:id", { preHandler: requireAuth }, async (req, reply) => {
+    const params = z.object({ id: z.string() }).parse(req.params);
+    const body = z
+        .object({
+        title: z.string().trim().min(1, "Title is required").optional(),
+        isCurrent: z.boolean().optional()
+    })
+        .parse(req.body);
+    // Verify project ownership
+    const project = await prisma.project.findFirst({
+        where: { id: params.id, userId: req.userId },
+    });
+    if (!project) {
+        return reply.notFound("Project not found");
+    }
+    // Update project
+    const updatedProject = await prisma.project.update({
+        where: { id: params.id },
+        data: { title: body.title },
+    });
+    // Set as current project if requested
+    if (body.isCurrent) {
+        await prisma.user.update({
+            where: { id: req.userId },
+            data: { currentProjectId: params.id },
+        });
+    }
+    return updatedProject;
+});
+app.delete("/api/projects/:id", { preHandler: requireAuth }, async (req, reply) => {
+    const params = z.object({ id: z.string() }).parse(req.params);
+    // Verify project ownership
+    const project = await prisma.project.findFirst({
+        where: { id: params.id, userId: req.userId },
+    });
+    if (!project) {
+        return reply.notFound("Project not found");
+    }
+    // Check if this is the user's only project
+    const projectCount = await prisma.project.count({
+        where: { userId: req.userId },
+    });
+    if (projectCount === 1) {
+        return reply.badRequest("Cannot delete your only project");
+    }
+    // Delete the project (cascades to tasks and staff)
+    await prisma.project.delete({
+        where: { id: params.id },
+    });
+    // If this was the current project, set current to null
+    const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { currentProjectId: true },
+    });
+    if (user?.currentProjectId === params.id) {
+        await prisma.user.update({
+            where: { id: req.userId },
+            data: { currentProjectId: null },
+        });
+    }
+    return { success: true };
+});
 // Staff routes
 app.get("/api/staff", { preHandler: requireAuth }, async (req) => {
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return [];
+    }
     const staff = await prisma.staff.findMany({
-        where: { userId: req.userId },
+        where: {
+            userId: req.userId,
+            projectId: currentProject.id
+        },
         orderBy: { name: "asc" },
     });
     return staff;
 });
 app.post("/api/staff", { preHandler: requireAuth }, async (req, reply) => {
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return reply.badRequest("No current project selected");
+    }
     const body = z
         .object({ name: z.string().trim().min(1) })
         .parse(req.body);
@@ -142,15 +283,17 @@ app.post("/api/staff", { preHandler: requireAuth }, async (req, reply) => {
         data: {
             name: body.name,
             userId: req.userId,
+            projectId: currentProject.id,
         },
     });
     return created;
 });
 app.delete("/api/staff/:id", { preHandler: requireAuth }, async (req, reply) => {
     const { id } = req.params;
-    // Verify staff belongs to user
+    // Verify staff belongs to user and current project
+    const currentProject = await getCurrentProject(req.userId);
     const staff = await prisma.staff.findUnique({ where: { id } });
-    if (!staff || staff.userId !== req.userId) {
+    if (!staff || staff.userId !== req.userId || staff.projectId !== currentProject?.id) {
         return reply
             .status(404)
             .send({ error: "not_found", message: "Staff not found" });
@@ -174,6 +317,10 @@ app.delete("/api/staff/:id", { preHandler: requireAuth }, async (req, reply) => 
 });
 // Tasks routes
 app.get("/api/tasks", { preHandler: requireAuth }, async (req) => {
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return [];
+    }
     const q = req.query || {};
     const staffId = typeof q.staff_id === "string" ? q.staff_id : undefined;
     const unassigned = q.unassigned === "true" || q.unassigned === true;
@@ -194,7 +341,8 @@ app.get("/api/tasks", { preHandler: requireAuth }, async (req) => {
         const list = await prisma.task.findMany({
             where: {
                 id: { in: ids },
-                userId: req.userId, // Only user's tasks
+                userId: req.userId,
+                projectId: currentProject.id,
             },
             include,
         });
@@ -203,7 +351,10 @@ app.get("/api/tasks", { preHandler: requireAuth }, async (req) => {
     }
     else {
         tasks = await prisma.task.findMany({
-            where: { userId: req.userId },
+            where: {
+                userId: req.userId,
+                projectId: currentProject.id
+            },
             include,
         });
     }
@@ -233,6 +384,10 @@ app.post("/api/tasks", { preHandler: requireAuth }, async (req, reply) => {
             .status(400)
             .send({ error: "validation_error", issues: parse.error.issues });
     const body = parse.data;
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return reply.badRequest("No current project selected");
+    }
     const created = await prisma.$transaction(async (tx) => {
         const t = await tx.task.create({
             data: {
@@ -241,6 +396,7 @@ app.post("/api/tasks", { preHandler: requireAuth }, async (req, reply) => {
                 jiraUrl: body.jiraUrl,
                 theme: body.theme,
                 userId: req.userId,
+                projectId: currentProject.id,
             },
         });
         const pos = nextPosition(await maxPosition(null));
@@ -281,9 +437,10 @@ app.patch("/api/tasks/:id", { preHandler: requireAuth }, async (req, reply) => {
             issues: parse.error.issues,
         });
     const body = parse.data;
-    // Verify task belongs to user
+    // Verify task belongs to user and current project
+    const currentProject = await getCurrentProject(req.userId);
     const task = await prisma.task.findUnique({ where: { id } });
-    if (!task || task.userId !== req.userId) {
+    if (!task || task.userId !== req.userId || task.projectId !== currentProject?.id) {
         return reply
             .status(404)
             .send({ error: "not_found", message: "Task not found" });
@@ -293,9 +450,10 @@ app.patch("/api/tasks/:id", { preHandler: requireAuth }, async (req, reply) => {
 });
 app.delete("/api/tasks/:id", { preHandler: requireAuth }, async (req, reply) => {
     const { id } = req.params;
-    // Verify task belongs to user
+    // Verify task belongs to user and current project
+    const currentProject = await getCurrentProject(req.userId);
     const task = await prisma.task.findUnique({ where: { id } });
-    if (!task || task.userId !== req.userId) {
+    if (!task || task.userId !== req.userId || task.projectId !== currentProject?.id) {
         return reply
             .status(404)
             .send({ error: "not_found", message: "Task not found" });
@@ -313,21 +471,22 @@ app.post("/api/assignments/move", { preHandler: requireAuth }, async (req, reply
         afterTaskId: z.string().min(1).nullable().optional(),
     })
         .parse(req.body);
-    // Verify task belongs to user
+    // Verify task belongs to user and current project
+    const currentProject = await getCurrentProject(req.userId);
     const task = await prisma.task.findUnique({
         where: { id: body.taskId },
     });
-    if (!task || task.userId !== req.userId) {
+    if (!task || task.userId !== req.userId || task.projectId !== currentProject?.id) {
         return reply
             .status(404)
             .send({ error: "not_found", message: "Task not found" });
     }
-    // Verify target staff belongs to user (if specified)
+    // Verify target staff belongs to user and current project (if specified)
     if (body.targetStaffId) {
         const staff = await prisma.staff.findUnique({
             where: { id: body.targetStaffId },
         });
-        if (!staff || staff.userId !== req.userId) {
+        if (!staff || staff.userId !== req.userId || staff.projectId !== currentProject?.id) {
             return reply
                 .status(404)
                 .send({ error: "not_found", message: "Staff not found" });
@@ -367,11 +526,18 @@ app.post("/api/assignments/move", { preHandler: requireAuth }, async (req, reply
 });
 // Themes summary
 app.get("/api/themes/summary", { preHandler: requireAuth }, async (req) => {
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return [];
+    }
     const rows = await prisma.task.groupBy({
         by: ["theme"],
         _sum: { mandays: true },
         _count: true,
-        where: { userId: req.userId },
+        where: {
+            userId: req.userId,
+            projectId: currentProject.id
+        },
     });
     return rows
         .filter((r) => (r.theme ?? "").trim() !== "")
@@ -384,14 +550,31 @@ app.get("/api/themes/summary", { preHandler: requireAuth }, async (req) => {
 });
 // Danger: clear all user data (dev convenience)
 app.post("/api/admin/clear", { preHandler: requireAuth }, async (req) => {
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return { ok: true };
+    }
     await prisma.$transaction([
         prisma.assignment.deleteMany({
             where: {
-                task: { userId: req.userId },
+                task: {
+                    userId: req.userId,
+                    projectId: currentProject.id
+                },
             },
         }),
-        prisma.task.deleteMany({ where: { userId: req.userId } }),
-        prisma.staff.deleteMany({ where: { userId: req.userId } }),
+        prisma.task.deleteMany({
+            where: {
+                userId: req.userId,
+                projectId: currentProject.id
+            }
+        }),
+        prisma.staff.deleteMany({
+            where: {
+                userId: req.userId,
+                projectId: currentProject.id
+            }
+        }),
     ]);
     return { ok: true };
 });
@@ -409,13 +592,22 @@ app.get("/api/export/csv", async (req, reply) => {
         const s = (val ?? "").toString();
         return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     }
+    const currentProject = await getCurrentProject(req.userId);
+    if (!currentProject) {
+        return reply
+            .status(400)
+            .send({ error: "no_project", message: "No current project selected" });
+    }
     const header = ["name", "mandays", "staff", "theme", "jira"];
     const lines = [header.join(",")];
-    // Backlog first - only user's tasks
+    // Backlog first - only user's current project tasks
     const backlogAssigns = await prisma.assignment.findMany({
         where: {
             staffId: null,
-            task: { userId: req.userId },
+            task: {
+                userId: req.userId,
+                projectId: currentProject.id
+            },
         },
         orderBy: { position: "asc" },
     });
@@ -424,6 +616,7 @@ app.get("/api/export/csv", async (req, reply) => {
             where: {
                 id: { in: backlogAssigns.map((a) => a.taskId) },
                 userId: req.userId,
+                projectId: currentProject.id,
             },
         });
         const map = new Map(tasks.map((t) => [t.id, t]));
@@ -514,6 +707,15 @@ app.get("/api/share/:token/staff", async (req) => {
         orderBy: { name: "asc" },
     });
     return staff;
+});
+app.get("/api/share/:token/project", async (req) => {
+    const { token } = req.params;
+    const share = await ensureShare(token);
+    const user = await prisma.user.findUnique({
+        where: { id: share.createdBy },
+        select: { projectTitle: true },
+    });
+    return { projectTitle: user?.projectTitle || null };
 });
 app.get("/api/share/:token/tasks", async (req) => {
     const { token } = req.params;

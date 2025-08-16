@@ -19,3 +19,18 @@ export type Task = {
   assignment?: Assignment | null;
 };
 
+export type Project = {
+  id: ID;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type User = {
+  id: ID;
+  email: string;
+  name: string | null;
+  projectTitle: string | null;
+  currentProject: Project | null;
+};
+

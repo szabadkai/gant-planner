@@ -1,44 +1,54 @@
 import Board from './components/Board';
 import Login from './components/Login';
 import ShareModal from './components/ShareModal';
+import ProjectSelector from './components/ProjectSelector';
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
-
-type User = { id: string; email: string; name: string | null; projectTitle: string | null };
+import type { User } from './types';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [zoom, setZoom] = useState(28);
   const [showShareModal, setShowShareModal] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState('');
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
-  // Check for existing auth on app load
+  const queryClient = useQueryClient();
+
+  // Query user data if we have a userId
+  const hasUserId = localStorage.getItem('userId');
+  const { data: userResponse, isLoading: userLoading, error: userError } = useQuery({
+    queryKey: ['user'],
+    queryFn: api.me,
+    enabled: !!hasUserId && initialCheckDone,
+    retry: false,
+  });
+
+  const user = userResponse?.user || null;
+
+  // Initial auth check
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-      api.me()
-        .then(response => setUser(response.user))
-        .catch(() => {
-          // Auth failed, clear stored userId
-          localStorage.removeItem('userId');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    setInitialCheckDone(true);
   }, []);
 
+  // Handle auth failure
+  useEffect(() => {
+    if (userError && hasUserId) {
+      localStorage.removeItem('userId');
+      queryClient.clear();
+    }
+  }, [userError, hasUserId, queryClient]);
+
   const handleLogin = (user: User) => {
-    setUser(user);
+    queryClient.setQueryData(['user'], { user });
   };
 
   const handleLogout = () => {
     localStorage.removeItem('userId');
-    setUser(null);
+    queryClient.clear();
   };
 
   const handleTitleEdit = () => {

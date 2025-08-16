@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
 
-export default function Login({ onLogin }: { onLogin: (user: { id: string; email: string; name: string | null }) => void }) {
+export default function Login({ onLogin }: { onLogin: (user: { id: string; email: string; name: string | null; projectTitle: string | null }) => void }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

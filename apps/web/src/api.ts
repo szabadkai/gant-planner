@@ -1,4 +1,4 @@
-import { Task, Staff, ID } from "./types";
+import { Task, Staff, ID, User, Project } from "./types";
 
 async function j<T>(res: Response): Promise<T> {
     if (!res.ok) throw new Error(await res.text());
@@ -19,22 +19,43 @@ export const api = {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
         }).then((res) => j<{ message: string }>(res)),
-    verifyToken: (token: string): Promise<{ user: { id: string; email: string; name: string | null } }> =>
+    verifyToken: (token: string): Promise<{ user: User }> =>
         fetch("/api/auth/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token }),
-        }).then((res) => j<{ user: { id: string; email: string; name: string | null } }>(res)),
-    me: (): Promise<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }> =>
+        }).then((res) => j<{ user: User }>(res)),
+    me: (): Promise<{ user: User }> =>
         fetch("/api/auth/me", {
             headers: getAuthHeaders(),
-        }).then((res) => j<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }>(res)),
-    updateProjectTitle: (projectTitle: string | null): Promise<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }> =>
+        }).then((res) => j<{ user: User }>(res)),
+    updateProjectTitle: (projectTitle: string | null): Promise<{ user: User }> =>
         fetch("/api/auth/me", {
             method: "PATCH",
             headers: { "Content-Type": "application/json", ...getAuthHeaders() },
             body: JSON.stringify({ projectTitle }),
-        }).then((res) => j<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }>(res)),
+        }).then((res) => j<{ user: User }>(res)),
+    
+    // Project endpoints
+    listProjects: (): Promise<Project[]> =>
+        fetch("/api/projects", { headers: getAuthHeaders() }).then((res) => j<Project[]>(res)),
+    createProject: (title: string): Promise<Project> =>
+        fetch("/api/projects", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            body: JSON.stringify({ title }),
+        }).then((res) => j<Project>(res)),
+    updateProject: (id: string, data: { title?: string; isCurrent?: boolean }): Promise<Project> =>
+        fetch(`/api/projects/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            body: JSON.stringify(data),
+        }).then((res) => j<Project>(res)),
+    deleteProject: (id: string): Promise<{ success: true }> =>
+        fetch(`/api/projects/${id}`, {
+            method: "DELETE",
+            headers: getAuthHeaders(),
+        }).then((res) => j<{ success: true }>(res)),
     
     health: () => fetch("/api/health").then((r) => r.json()),
     listStaff: (): Promise<Staff[]> => 
