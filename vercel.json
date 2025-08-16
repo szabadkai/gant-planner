@@ -11,11 +11,6 @@
             }
         }
     ],
-    "functions": {
-        "apps/api/src/server.ts": {
-            "maxDuration": 30
-        }
-    },
     "routes": [
         {
             "src": "/api/(.*)",
