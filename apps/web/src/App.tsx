@@ -43,6 +43,7 @@ export default function App() {
   }, [userError, hasUserId, queryClient]);
 
   const handleLogin = (user: { id: string; email: string; name: string | null; projectTitle: string | null }) => {
+    localStorage.setItem('userId', user.id);
     queryClient.setQueryData(['user'], { user });
   };
 

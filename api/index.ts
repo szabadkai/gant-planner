@@ -24,14 +24,21 @@ app.setErrorHandler((err, req, reply) => {
 });
 
 app.post('/api/auth/request-login', async (req, reply) => {
-  const { email } = z.object({ email: z.string().email() }).parse((req as any).body);
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  const { email } = z.object({ email: z.string().email() }).parse(body);
+  const token = randomUUID();
+  const referer = req.headers.referer || 'http://localhost:3000';
+  const magicLink = new URL('/', referer);
+  magicLink.searchParams.set('token', token);
+
   // In a real app, you'd send a magic link to the user's email
-  console.log(`Login requested for ${email}`);
+  console.log(`Login requested for ${email}. Magic link: ${magicLink.href}`);
   return { ok: true };
 });
 
 app.post('/api/auth/verify', async (req, reply) => {
-  const { token } = z.object({ token: z.string() }).parse((req as any).body);
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  const { token } = z.object({ token: z.string() }).parse(body);
   // In a real app, you'd verify the token and log the user in
   console.log(`Token verification requested for ${token}`);
   return { user: { id: '1', email: 'test@example.com', name: 'Test User', projectTitle: 'Test Project' } };
