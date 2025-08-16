@@ -96,26 +96,143 @@ export default function BacklogPanel() {
     e.currentTarget.reset();
   };
 
+  const isMobile = window.innerWidth < 768;
+
   return (
     <section>
       <h2>Backlog</h2>
-      <form onSubmit={onSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 1fr 1fr 100px 100px 1fr auto', gap: 8, alignItems: 'center', marginBottom: 16 }}>
-        <input name="name" placeholder="Task name" />
-        <input name="mandays" type="number" min={1} defaultValue={1} />
-        <input name="theme" placeholder="Theme" />
-        <input name="jiraUrl" placeholder="Jira URL" />
-        <select name="priority" defaultValue="MEDIUM">
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
+      <form 
+        onSubmit={onSubmit} 
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? '1fr' : '2fr 80px 1fr 1fr 100px 100px auto auto', 
+          gap: isMobile ? '8px' : '6px', 
+          alignItems: 'center', 
+          marginBottom: 16,
+          padding: isMobile ? '8px' : '0',
+          background: isMobile ? 'var(--panel)' : 'transparent',
+          borderRadius: isMobile ? '6px' : '0',
+          border: isMobile ? '1px solid var(--border)' : 'none'
+        }}
+      >
+        {/* Row 1: Name and Days */}
+        <input 
+          name="name" 
+          placeholder="Task name" 
+          style={{ 
+            gridColumn: isMobile ? '1' : '1',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '8px' : '6px 8px'
+          }} 
+          required 
+        />
+        <input 
+          name="mandays" 
+          type="number" 
+          min={1} 
+          defaultValue={1} 
+          style={{ 
+            gridColumn: isMobile ? '1' : '2',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '8px' : '6px 8px'
+          }} 
+        />
+        
+        {/* Row 2: Theme and Priority */}
+        <input 
+          name="theme" 
+          placeholder="Theme (optional)" 
+          style={{ 
+            gridColumn: isMobile ? '1' : '3',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '8px' : '6px 8px'
+          }} 
+        />
+        <select 
+          name="priority" 
+          defaultValue="MEDIUM"
+          style={{ 
+            gridColumn: isMobile ? '1' : '5',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '8px' : '6px 8px'
+          }}
+        >
+          <option value="HIGH">🔴 High</option>
+          <option value="MEDIUM">🟡 Medium</option>
+          <option value="LOW">🟢 Low</option>
         </select>
-        <input name="dueDate" type="date" />
-        <select name="dependencies" multiple style={{ height: 'auto' }}>
-          {allTasks?.map(t => (
-            <option key={t.id} value={t.id}>{t.name}</option>
-          ))}
-        </select>
-        <button type="submit">Add</button>
+        
+        {/* Row 3: Jira URL and Due Date */}
+        <input 
+          name="jiraUrl" 
+          placeholder="Jira URL (optional)" 
+          style={{ 
+            gridColumn: isMobile ? '1' : '4',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '8px' : '6px 8px'
+          }} 
+        />
+        <input 
+          name="dueDate" 
+          type="date" 
+          style={{ 
+            gridColumn: isMobile ? '1' : '6',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '8px' : '6px 8px'
+          }} 
+        />
+        
+        {/* Row 4: Dependencies (mobile only) or same row (desktop) */}
+        {isMobile ? (
+          <select 
+            name="dependencies" 
+            multiple 
+            style={{ 
+              gridColumn: '1',
+              minHeight: '60px',
+              fontSize: '16px',
+              padding: '8px'
+            }}
+          >
+            {allTasks?.map(t => (
+              <option key={t.id} value={t.id}>{t.name} ({t.mandays}d)</option>
+            ))}
+          </select>
+        ) : (
+          <select 
+            name="dependencies" 
+            multiple 
+            style={{ 
+              gridColumn: '7',
+              height: '60px',
+              fontSize: '14px',
+              padding: '6px 8px',
+              minWidth: '120px'
+            }}
+          >
+            {allTasks?.map(t => (
+              <option key={t.id} value={t.id}>{t.name} ({t.mandays}d)</option>
+            ))}
+          </select>
+        )}
+        
+        {/* Submit button */}
+        <button 
+          type="submit"
+          style={{
+            gridColumn: isMobile ? '1' : '8',
+            fontSize: isMobile ? '16px' : '14px',
+            padding: isMobile ? '12px' : '6px 12px',
+            background: 'var(--accent)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          {isMobile ? '➕ Add Task' : 'Add'}
+        </button>
       </form>
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
