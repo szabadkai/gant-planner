@@ -164,29 +164,47 @@ button:disabled { cursor: not-allowed; background: var(--disabled-bg); color: va
   }
   /* Reduce gantt gutter on mobile */
   :root {
-    --left-gutter: 100px;
-    --cell-width: 24px;
-    --row-height: 32px;
+    --left-gutter: 60px;
+    --cell-width: 22px;
+    --row-height: 28px;
   }
   .gantt-header .col {
-    font-size: 9px;
-    padding: 3px 0;
+    font-size: 8px;
+    padding: 2px 0;
+  }
+  .gantt-header .gutter {
+    width: var(--left-gutter);
+    flex: 0 0 var(--left-gutter);
   }
   .gantt-row .label {
-    padding-left: 4px;
-    padding-top: 6px;
-    font-size: 12px;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 4px;
+    font-size: 10px;
     z-index: 10;
     border-right: 1px solid var(--border);
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: flex-start;
   }
   .gantt-block {
-    top: 4px;
-    height: calc(var(--row-height) - 8px);
-    padding: 0 4px;
-    font-size: 11px;
+    top: 2px;
+    height: calc(var(--row-height) - 4px);
+    padding: 0 3px;
+    font-size: 10px;
+    gap: 4px;
   }
   .gantt-block .meta {
-    font-size: 10px;
+    font-size: 9px;
+  }
+  .gantt-block span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
   /* Mobile-specific overrides for top bar */
   .layout > div:first-child {

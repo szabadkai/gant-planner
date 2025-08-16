@@ -34,6 +34,20 @@ function applyTheme(el: HTMLElement, theme?: string | null) {
   el.style.background = `linear-gradient(135deg, hsla(${hue},70%,60%,0.22), hsla(${(hue+20)%360},70%,50%,0.22))`;
 }
 
+function truncateNameForMobile(name: string): string {
+  if (name.length <= 6) return name;
+  
+  // Try initials first for longer names
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    const initials = words.map(w => w.charAt(0).toUpperCase()).join('');
+    if (initials.length <= 4) return initials;
+  }
+  
+  // Fallback: truncate to 6 characters
+  return name.substring(0, 6);
+}
+
 // Stable components extracted to avoid remount loops during drag
 function GanttDropTarget({ taskId, leftPx, widthPx }: { taskId: string; leftPx: string; widthPx: string }) {
   const { setNodeRef } = useDroppable({ id: `gblock:${taskId}` });
@@ -106,9 +120,13 @@ function GanttRow({ staffId, name, tasks, axis, onSelectTask, onRemove, themeFil
   const { setNodeRef, isOver } = useDroppable({ id: `gantt:${staffId}` });
   let cursor = 0;
   
+  // Mobile-friendly name truncation
+  const isMobile = window.innerWidth < 768;
+  const displayName = isMobile ? truncateNameForMobile(name) : name;
+  
   return (
     <div className={`gantt-row${isOver ? ' drag-over' : ''}`}>
-      <div className="label">{name}</div>
+      <div className="label" title={name}>{displayName}</div>
       <div className="grid" ref={setNodeRef}>{axis.map((d, idx) => (<div className={`cell${isWeekStart(d) ? ' week-start' : ''}`} key={idx} />))}</div>
       <div className="blocks">
         {tasks.map((t, taskIndex) => {
