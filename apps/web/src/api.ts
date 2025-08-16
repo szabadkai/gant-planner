@@ -75,11 +75,16 @@ export const api = {
         fetch("/api/tasks?unassigned=true", { headers: getAuthHeaders() }).then((res) => j<Task[]>(res)),
     listTasksFor: (staffId: ID): Promise<Task[]> =>
         fetch(`/api/tasks?staff_id=${encodeURIComponent(staffId)}`, { headers: getAuthHeaders() }).then((res) => j<Task[]>(res)),
+    listAllTasks: (): Promise<Task[]> =>
+        fetch("/api/tasks", { headers: getAuthHeaders() }).then((res) => j<Task[]>(res)),
     createTask: (input: {
         name: string;
         mandays: number;
         jiraUrl?: string;
         theme?: string;
+        dependencies?: string[];
+        dueDate?: string;
+        priority?: string;
     }): Promise<Task> =>
         fetch("/api/tasks", {
             method: "POST",
@@ -88,7 +93,7 @@ export const api = {
         }).then((res) => j<Task>(res)),
     updateTask: (
         id: ID,
-        patch: Partial<Pick<Task, "name" | "mandays" | "jiraUrl" | "theme">>
+        patch: Partial<Pick<Task, "name" | "mandays" | "jiraUrl" | "theme" | "dependencies" | "dueDate" | "priority">>
     ): Promise<Task> =>
         fetch(`/api/tasks/${id}`, {
             method: "PATCH",

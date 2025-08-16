@@ -438,6 +438,17 @@ app.post("/api/tasks", { preHandler: requireAuth }, async (req: any, reply) => {
                 .optional()
                 .or(z.literal(""))
                 .transform((v) => (v ? v : undefined)),
+            dependencies: z
+                .array(z.string())
+                .optional()
+                .transform((v) => v ? JSON.stringify(v) : undefined),
+            dueDate: z
+                .string()
+                .transform((v) => v ? new Date(v) : undefined)
+                .optional(),
+            priority: z
+                .enum(["HIGH", "MEDIUM", "LOW"])
+                .default("MEDIUM"),
         })
         .safeParse((req as any).body);
     if (!parse.success)
@@ -458,6 +469,9 @@ app.post("/api/tasks", { preHandler: requireAuth }, async (req: any, reply) => {
                 mandays: body.mandays,
                 jiraUrl: body.jiraUrl,
                 theme: body.theme,
+                dependencies: body.dependencies,
+                dueDate: body.dueDate,
+                priority: body.priority,
                 userId: req.userId,
                 projectId: currentProject.id,
             },
@@ -496,6 +510,17 @@ app.patch(
                     .optional()
                     .or(z.literal(""))
                     .transform((v) => (v === "" ? undefined : v)),
+                dependencies: z
+                    .array(z.string())
+                    .optional()
+                    .transform((v) => v ? JSON.stringify(v) : undefined),
+                dueDate: z
+                    .string()
+                    .transform((v) => v ? new Date(v) : undefined)
+                    .optional(),
+                priority: z
+                    .enum(["HIGH", "MEDIUM", "LOW"])
+                    .optional(),
             })
             .safeParse((req as any).body);
         if (!parse.success)
@@ -692,7 +717,7 @@ app.get("/api/export/csv", async (req: any, reply) => {
             .send({ error: "no_project", message: "No current project selected" });
     }
     
-    const header = ["name", "mandays", "staff", "theme", "jira"];
+    const header = ["name", "mandays", "staff", "theme", "jira", "dependencies", "dueDate", "priority"];
     const lines: string[] = [header.join(",")];
 
     // Backlog first - only user's current project tasks
@@ -725,6 +750,9 @@ app.get("/api/export/csv", async (req: any, reply) => {
                     "",
                     csvEscape(t.theme ?? ""),
                     csvEscape(t.jiraUrl ?? ""),
+                    csvEscape(t.dependencies ?? ""),
+                    csvEscape(t.dueDate?.toISOString().split('T')[0] ?? ""),
+                    csvEscape(t.priority ?? ""),
                 ].join(",")
             );
         }
@@ -768,6 +796,9 @@ app.get("/api/export/csv", async (req: any, reply) => {
                     csvEscape(s.name),
                     csvEscape(t.theme ?? ""),
                     csvEscape(t.jiraUrl ?? ""),
+                    csvEscape(t.dependencies ?? ""),
+                    csvEscape(t.dueDate?.toISOString().split('T')[0] ?? ""),
+                    csvEscape(t.priority ?? ""),
                 ].join(",")
             );
         }

@@ -16,6 +16,9 @@ export type Task = {
   mandays: number;
   jiraUrl?: string | null;
   theme?: string | null;
+  dependencies?: string | null; // JSON array of task IDs
+  dueDate?: string | null; // ISO date string
+  priority?: string | null; // HIGH, MEDIUM, LOW
   assignment?: Assignment | null;
 };
 

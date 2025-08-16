@@ -45,13 +45,16 @@ model Project {
 }
 
 model Task {
-  id        String   @id @default(uuid())
-  name      String
-  mandays   Int      @default(1)
-  jiraUrl   String?
-  theme     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  mandays      Int      @default(1)
+  jiraUrl      String?
+  theme        String?
+  dependencies String?  // JSON array of task IDs
+  dueDate      DateTime?
+  priority     String   @default("MEDIUM") // HIGH, MEDIUM, LOW
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   
   // Multi-tenant relation (legacy)
   userId    String
@@ -66,6 +69,8 @@ model Task {
   @@index([userId, theme])
   @@index([projectId, theme])
   @@index([theme])
+  @@index([dueDate])
+  @@index([priority])
 }
 
 model Staff {

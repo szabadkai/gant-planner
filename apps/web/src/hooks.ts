@@ -15,6 +15,10 @@ export function useStaffTasks(staffId: ID) {
   return useQuery<Task[]>({ queryKey: ['tasks', 'staff', staffId], queryFn: () => api.listTasksFor(staffId) });
 }
 
+export function useAllTasks() {
+  return useQuery<Task[]>({ queryKey: ['tasks', 'all'], queryFn: api.listAllTasks });
+}
+
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -29,7 +33,7 @@ export function useCreateTask() {
 export function useUpdateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: ID; patch: Partial<Pick<Task, 'name' | 'mandays' | 'jiraUrl' | 'theme'>> }) =>
+    mutationFn: ({ id, patch }: { id: ID; patch: Partial<Pick<Task, 'name' | 'mandays' | 'jiraUrl' | 'theme' | 'dependencies' | 'dueDate' | 'priority'>> }) =>
       api.updateTask(id, patch),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] });
