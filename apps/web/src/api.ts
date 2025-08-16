@@ -26,9 +26,7 @@ export const api = {
             body: JSON.stringify({ token }),
         }).then((res) => j<{ user: User }>(res)),
     me: (): Promise<{ user: User }> =>
-        fetch("/api/auth/me", {
-            headers: getAuthHeaders(),
-        }).then((res) => j<{ user: User }>(res)),
+        fetch("/api/auth/me").then((res) => j<{ user: User }>(res)),
     updateProjectTitle: (projectTitle: string | null): Promise<{ user: User }> =>
         fetch("/api/auth/me", {
             method: "PATCH",

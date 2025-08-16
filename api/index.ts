@@ -23,8 +23,31 @@ app.setErrorHandler((err, req, reply) => {
   return reply.send(err);
 });
 
+app.post('/api/auth/request-login', async (req, reply) => {
+  const { email } = z.object({ email: z.string().email() }).parse((req as any).body);
+  // In a real app, you'd send a magic link to the user's email
+  console.log(`Login requested for ${email}`);
+  return { ok: true };
+});
+
+app.post('/api/auth/verify', async (req, reply) => {
+  const { token } = z.object({ token: z.string() }).parse((req as any).body);
+  // In a real app, you'd verify the token and log the user in
+  console.log(`Token verification requested for ${token}`);
+  return { user: { id: '1', email: 'test@example.com', name: 'Test User', projectTitle: 'Test Project' } };
+});
+
+app.get('/api/auth/me', async (req, reply) => {
+  const userId = req.headers['x-user-id'];
+  // In a real app, you'd get the user from the database
+  console.log(`User requested for id ${userId}`);
+  return { user: { id: '1', email: 'test@example.com', name: 'Test User', projectTitle: 'Test Project' } };
+});
+
+
 // Health
 app.get('/api/health', async () => ({ status: 'ok' }));
+
 
 // Helpers
 async function maxPosition(staffId: string | null) {
