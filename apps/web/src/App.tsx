@@ -4,7 +4,7 @@ import ShareModal from './components/ShareModal';
 import { useState, useEffect } from 'react';
 import { api } from './api';
 
-type User = { id: string; email: string; name: string | null };
+type User = { id: string; email: string; name: string | null; projectTitle: string | null };
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -13,6 +13,8 @@ export default function App() {
   const [skipWeekends, setSkipWeekends] = useState(true);
   const [zoom, setZoom] = useState(28);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
 
   // Check for existing auth on app load
   useEffect(() => {
@@ -39,6 +41,34 @@ export default function App() {
     setUser(null);
   };
 
+  const handleTitleEdit = () => {
+    setTitleValue(user?.projectTitle || '');
+    setEditingTitle(true);
+  };
+
+  const handleTitleSave = async () => {
+    if (!user) return;
+    try {
+      const response = await api.updateProjectTitle(titleValue.trim() || null);
+      setUser(response.user);
+      setEditingTitle(false);
+    } catch (error) {
+      console.error('Failed to update project title:', error);
+    }
+  };
+
+  const handleTitleCancel = () => {
+    setEditingTitle(false);
+    setTitleValue('');
+  };
+
+  // Update titleValue when user changes
+  useEffect(() => {
+    if (user) {
+      setTitleValue(user.projectTitle || '');
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div style={{ 
@@ -60,7 +90,60 @@ export default function App() {
   return (
     <div style={{ padding: 16, fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h1 style={{ margin: 0 }}>Levi's Gantt Queue Planner</h1>
+        {editingTitle ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="text"
+              value={titleValue}
+              onChange={(e) => setTitleValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleTitleSave();
+                if (e.key === 'Escape') handleTitleCancel();
+              }}
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                background: 'transparent',
+                border: '2px dashed var(--border)',
+                color: 'var(--text)',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                minWidth: '250px'
+              }}
+              placeholder="Enter project title..."
+              autoFocus
+            />
+            <button onClick={handleTitleSave} style={{ padding: '6px 12px', fontSize: '0.875rem' }}>
+              Save
+            </button>
+            <button onClick={handleTitleCancel} style={{ padding: '6px 12px', fontSize: '0.875rem', background: 'transparent', color: 'var(--text-dim)', border: '1px solid var(--border)' }}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <h1 
+            style={{ 
+              margin: 0, 
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            onClick={handleTitleEdit}
+            title="Click to edit project title"
+          >
+            {user?.projectTitle || "Levi's Gantt Queue Planner"}
+            <span style={{ 
+              fontSize: '0.75rem', 
+              color: 'var(--text-dim)', 
+              opacity: 0.5,
+              fontWeight: 'normal'
+            }}>
+              [edit]
+            </span>
+          </h1>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div className="row no-wrap" style={{ marginBottom: 0 }}>
             <label style={{ color: 'var(--text-dim)', flex: '0 0 auto' }}>Start <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></label>

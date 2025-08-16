@@ -32,3 +32,11 @@ export function useSharedThemes(token: string) {
     enabled: !!token,
   });
 }
+
+export function useSharedProject(token: string) {
+  return useQuery({
+    queryKey: ['shared', 'project', token],
+    queryFn: () => api.getSharedProject(token),
+    enabled: !!token,
+  });
+}

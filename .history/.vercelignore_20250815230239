@@ -1,0 +1,12 @@
+node_modules
+.git
+.history
+.claude
+.DS_Store
+*.log
+.env.local
+.env.development
+apps/api/prisma/dev.db
+apps/api/prisma/migrations
+apps/web/node_modules
+apps/api/node_modules

@@ -1,0 +1,19 @@
+{
+    "buildCommand": "npm run build",
+    "installCommand": "npm install",
+    "outputDirectory": "apps/web/dist",
+    "builds": [
+        {
+            "src": "apps/web/package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist"
+            }
+        }
+    ],
+    "functions": {
+        "apps/api/src/server.ts": {
+            "maxDuration": 30
+        }
+    }
+}

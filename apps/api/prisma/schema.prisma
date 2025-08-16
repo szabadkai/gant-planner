@@ -8,16 +8,40 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  projectTitle    String?  // Legacy field - will be migrated to first project
+  currentProjectId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  tasks           Task[]   // Legacy relation
+  staff           Staff[]  // Legacy relation
+  projects        Project[]
+  currentProject  Project? @relation("UserCurrentProject", fields: [currentProjectId], references: [id])
+  shareLinks      ShareLink[]
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  title     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  // Multi-tenant relation
+  userId    String
+  owner     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   // Relations
-  tasks      Task[]
-  staff      Staff[]
-  shareLinks ShareLink[]
+  tasks     Task[]
+  staff     Staff[]
+  
+  // Current project relation
+  currentUsers User[] @relation("UserCurrentProject")
+  
+  @@index([userId])
 }
 
 model Task {
@@ -29,13 +53,18 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // Multi-tenant relation
+  // Multi-tenant relation (legacy)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project relation (new)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   assignment Assignment?
 
   @@index([userId, theme])
+  @@index([projectId, theme])
   @@index([theme])
 }
 
@@ -43,13 +72,18 @@ model Staff {
   id          String       @id @default(uuid())
   name        String
   
-  // Multi-tenant relation
+  // Multi-tenant relation (legacy)
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project relation (new)
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   assignments Assignment[]
 
   @@index([userId, name])
+  @@index([projectId, name])
 }
 
 model Assignment {
@@ -77,10 +111,14 @@ model ShareLink {
   createdBy  String
   user       User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   
+  // Project relation (optional - for project-specific shares)
+  projectId  String?
+  
   snapshots  ShareSnapshot[]
 
   @@index([expiresAt])
   @@index([createdBy])
+  @@index([projectId])
 }
 
 model ShareSnapshot {

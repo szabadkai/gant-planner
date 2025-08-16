@@ -40,7 +40,7 @@ function AddTaskForm() {
 export default function Board({ startDate, skipWeekends, zoom }: { startDate: string; skipWeekends: boolean; zoom: number }) {
   const [editing, setEditing] = useState<null | { id: string }>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [themeFilter, setThemeFilter] = useState<string | null>(null);
+  const [themeFilters, setThemeFilters] = useState<string[]>([]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const { data: backlog } = useBacklog();
   const { data: staff } = useStaff();
@@ -54,6 +54,14 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
   const { mutate: move } = useMoveTask();
   const { autoAssign, isLoading } = useAutoAssign();
   const qc = useQueryClient();
+
+  const toggleThemeFilter = (theme: string) => {
+    setThemeFilters(prev => 
+      prev.includes(theme) 
+        ? prev.filter(t => t !== theme)
+        : [...prev, theme]
+    );
+  };
 
   const containers = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -212,7 +220,7 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
                 {(backlog ?? []).map((t) => (
                   t.id === activeId ? null : (
                     <DraggableItem key={t.id} id={t.id}>
-                      <TaskCard task={t} onEdit={() => setEditing({ id: t.id })} dim={!!(themeFilter && (t.theme || '').trim() && t.theme !== themeFilter)} />
+                      <TaskCard task={t} onEdit={() => setEditing({ id: t.id })} dim={!!(themeFilters.length > 0 && !themeFilters.includes(t.theme || ''))} />
                     </DraggableItem>
                   )
                 ))}
@@ -224,12 +232,12 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
             <StaffPanel />
           </div>
           <div className="panel">
-            <ThemesPanel selected={themeFilter} onSelect={(t) => setThemeFilter(t || null)} />
+            <ThemesPanel selectedThemes={themeFilters} onToggle={toggleThemeFilter} />
           </div>
         </aside>
         <main className="main">
           <div className="panel" style={{ padding: 0 }}>
-            <Gantt onSelectTask={(id) => setEditing({ id })} themeFilter={themeFilter} startDate={startDate} skipWeekends={skipWeekends} zoom={zoom} />
+            <Gantt onSelectTask={(id) => setEditing({ id })} themeFilters={themeFilters} startDate={startDate} skipWeekends={skipWeekends} zoom={zoom} />
           </div>
         </main>
       </div>

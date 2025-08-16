@@ -68,10 +68,12 @@ app.post("/api/auth/verify", async (req, reply) => {
     });
 
     if (!verificationToken || verificationToken.usedAt) {
-        return reply.status(400).send({
-            error: "invalid_token",
-            message: "Invalid or expired token",
-        });
+        return reply
+            .status(400)
+            .send({
+                error: "invalid_token",
+                message: "Invalid or expired token",
+            });
     }
 
     if (verificationToken.expiresAt < new Date()) {
@@ -117,46 +119,8 @@ app.get("/api/auth/me", async (req, reply) => {
             .send({ error: "unauthorized", message: "User not found" });
     }
 
-    return {
-        user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            projectTitle: user.projectTitle,
-        },
-    };
+    return { user: { id: user.id, email: user.email, name: user.name } };
 });
-
-app.patch(
-    "/api/auth/me",
-    { preHandler: requireAuth },
-    async (req: any, reply) => {
-        const body = z
-            .object({
-                projectTitle: z
-                    .string()
-                    .trim()
-                    .optional()
-                    .or(z.literal(""))
-                    .transform((v) => (v === "" ? null : v || null)),
-            })
-            .parse((req as any).body);
-
-        const updated = await prisma.user.update({
-            where: { id: req.userId },
-            data: { projectTitle: body.projectTitle },
-        });
-
-        return {
-            user: {
-                id: updated.id,
-                email: updated.email,
-                name: updated.name,
-                projectTitle: updated.projectTitle,
-            },
-        };
-    }
-);
 
 // Auth middleware helper
 function requireAuth(req: any, reply: any, done: any) {
@@ -353,10 +317,12 @@ app.patch(
             })
             .safeParse((req as any).body);
         if (!parse.success)
-            return reply.status(400).send({
-                error: "validation_error",
-                issues: parse.error.issues,
-            });
+            return reply
+                .status(400)
+                .send({
+                    error: "validation_error",
+                    issues: parse.error.issues,
+                });
         const body = parse.data;
 
         // Verify task belongs to user
@@ -625,16 +591,6 @@ app.get("/api/share/:token/staff", async (req) => {
         orderBy: { name: "asc" },
     });
     return staff;
-});
-
-app.get("/api/share/:token/project", async (req) => {
-    const { token } = req.params as any;
-    const share = await ensureShare(token);
-    const user = await prisma.user.findUnique({
-        where: { id: share.createdBy },
-        select: { projectTitle: true },
-    });
-    return { projectTitle: user?.projectTitle || null };
 });
 
 app.get("/api/share/:token/tasks", async (req) => {

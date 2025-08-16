@@ -47,7 +47,7 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
       style={{ 
         position: 'fixed', 
         inset: 0, 
-        background: 'rgba(0,0,0,0.35)', 
+        background: 'var(--modal-backdrop)', 
         display: 'grid', 
         placeItems: 'center', 
         zIndex: 50 
@@ -57,13 +57,15 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
       <div 
         onClick={(e) => e.stopPropagation()} 
         style={{ 
-          background: 'white', 
+          background: 'var(--panel)', 
+          border: '1px solid var(--border)',
           padding: 24, 
           borderRadius: 12, 
           minWidth: 400, 
           maxWidth: 500,
           display: 'grid', 
-          gap: 16 
+          gap: 16,
+          color: 'var(--text)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -76,14 +78,14 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
               fontSize: '20px',
               cursor: 'pointer',
               padding: '4px',
-              color: '#666'
+              color: 'var(--text-dim)'
             }}
           >
             ×
           </button>
         </div>
 
-        <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+        <p style={{ margin: 0, color: 'var(--text-dim)', fontSize: '14px' }}>
           Generate a read-only link to share your project with others. Anyone with this link can view your project but cannot make changes.
         </p>
 
@@ -94,9 +96,9 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
               disabled={isGenerating}
               style={{
                 padding: '10px 16px',
-                backgroundColor: '#007acc',
-                color: 'white',
-                border: 'none',
+                backgroundColor: isGenerating ? 'var(--disabled-bg)' : 'var(--accent)',
+                color: isGenerating ? 'var(--disabled-text)' : 'white',
+                border: `1px solid ${isGenerating ? 'var(--border)' : 'var(--accent)'}`,
                 borderRadius: '6px',
                 cursor: isGenerating ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
@@ -120,17 +122,18 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    border: '1px solid #ccc',
+                    border: '1px solid var(--border)',
                     borderRadius: '4px',
                     fontSize: '14px',
-                    backgroundColor: '#f9f9f9'
+                    backgroundColor: 'var(--input-bg)',
+                    color: 'var(--text)'
                   }}
                 />
                 <button
                   onClick={copyToClipboard}
                   style={{
                     padding: '8px 12px',
-                    backgroundColor: copyFeedback ? '#28a745' : '#6c757d',
+                    backgroundColor: copyFeedback ? 'var(--success)' : 'var(--text-muted)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -150,9 +153,9 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
                 onClick={() => setShareToken(null)}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: '#f8f9fa',
-                  color: '#6c757d',
-                  border: '1px solid #dee2e6',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-dim)',
+                  border: '1px solid var(--border)',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px'
@@ -164,9 +167,9 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
                 onClick={() => window.open(shareUrl || '', '_blank')}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: '#007acc',
+                  backgroundColor: 'var(--accent)',
                   color: 'white',
-                  border: 'none',
+                  border: '1px solid var(--accent)',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px'
@@ -181,10 +184,10 @@ export default function ShareModal({ onClose }: { onClose: () => void }) {
         {error && (
           <div style={{ 
             padding: '8px 12px',
-            backgroundColor: '#f8d7da',
-            border: '1px solid #f5c6cb',
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            border: '1px solid var(--danger)',
             borderRadius: '4px',
-            color: '#721c24',
+            color: 'var(--danger)',
             fontSize: '14px'
           }}>
             {error}

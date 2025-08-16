@@ -46,12 +46,15 @@ npm start            # Start production API server
 ### API Application (`apps/api/`)
 
 ```bash
-npm run dev          # Development server with watch mode
-npm run build        # TypeScript compilation
+npm run dev          # Development server with watch mode (tsx watch)
+npm run build        # TypeScript compilation + Prisma generate
 npm run start        # Production server
+npm run vercel-build # Vercel deployment build
 npm run prisma:generate  # Generate Prisma client
 npm run prisma:migrate   # Run database migrations
 ```
+
+Note: There's also a legacy `/api/` directory for Vercel deployment with a separate package.json.
 
 ### Web Application (`apps/web/`)
 
@@ -92,6 +95,13 @@ Key Prisma commands are available via npm scripts in the API package.
 ### Task Positioning System
 
 Tasks use decimal positioning within staff queues to enable efficient drag-and-drop reordering without cascading updates. The system leaves gaps (1024-unit increments) and uses fractional positioning for insertions.
+
+### Development Environment
+
+- No linting or testing frameworks are currently configured
+- TypeScript compilation with strict settings in both apps
+- Development uses tsx for hot-reloading in API and Vite dev server for web
+- Database migrations are managed via Prisma CLI
 
 ### React Frontend Architecture
 

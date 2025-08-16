@@ -8,6 +8,7 @@ import React from 'react';
 
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function isWeekend(d: Date) { const n = d.getDay(); return n === 0 || n === 6; }
+function isWeekStart(d: Date) { return d.getDay() === 1; } // Monday
 function fmt(d: Date) { return `${d.getMonth() + 1}/${d.getDate()}`; }
 
 function buildAxis(startISO: string, count: number, skipWeekends: boolean): Date[] {
@@ -39,7 +40,7 @@ function GanttDropTarget({ taskId, leftPx, widthPx }: { taskId: string; leftPx: 
   return <div ref={setNodeRef} style={{ position: 'absolute', left: leftPx, width: widthPx, top: 0, bottom: 0 }} />;
 }
 
-function GanttBlock({ task, staffId, start, end, leftPx, widthPx, themeFilter, onRemove, onEdgeHover }: { task: Task; staffId: string; start: number; end: number; leftPx: string; widthPx: string; themeFilter?: string | null; onRemove?: (id: string) => void; onEdgeHover?: (info: { staffId: string; index: number } | null) => void }) {
+function GanttBlock({ task, staffId, start, end, leftPx, widthPx, themeFilters, onRemove, onEdgeHover }: { task: Task; staffId: string; start: number; end: number; leftPx: string; widthPx: string; themeFilters?: string[]; onRemove?: (id: string) => void; onEdgeHover?: (info: { staffId: string; index: number } | null) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const [isDragEnding, setIsDragEnding] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
@@ -66,7 +67,7 @@ function GanttBlock({ task, staffId, start, end, leftPx, widthPx, themeFilter, o
   const style: React.CSSProperties = {
     left: leftPx,
     width: widthPx,
-    opacity: (themeFilter && (task.theme || '').trim() && task.theme !== themeFilter) ? 0.35 : 1,
+    opacity: (themeFilters && themeFilters.length > 0 && !themeFilters.includes(task.theme || '')) ? 0.35 : 1,
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition: isDragging ? 'none' : 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   };
@@ -101,14 +102,14 @@ function GanttBlock({ task, staffId, start, end, leftPx, widthPx, themeFilter, o
   );
 }
 
-function GanttRow({ staffId, name, tasks, axis, onSelectTask, onRemove, themeFilter, activeId, children, onEdgeHover }: { staffId: string; name: string; tasks: Task[]; axis: Date[]; onSelectTask?: (id: string) => void; onRemove?: (id: string) => void; themeFilter?: string | null; activeId?: string | null; children?: React.ReactNode; onEdgeHover?: (info: { staffId: string; index: number } | null) => void }) {
+function GanttRow({ staffId, name, tasks, axis, onSelectTask, onRemove, themeFilters, activeId, children, onEdgeHover }: { staffId: string; name: string; tasks: Task[]; axis: Date[]; onSelectTask?: (id: string) => void; onRemove?: (id: string) => void; themeFilters?: string[]; activeId?: string | null; children?: React.ReactNode; onEdgeHover?: (info: { staffId: string; index: number } | null) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: `gantt:${staffId}` });
   let cursor = 0;
   
   return (
     <div className={`gantt-row${isOver ? ' drag-over' : ''}`}>
       <div className="label">{name}</div>
-      <div className="grid" ref={setNodeRef}>{axis.map((_, idx) => (<div className="cell" key={idx} />))}</div>
+      <div className="grid" ref={setNodeRef}>{axis.map((d, idx) => (<div className={`cell${isWeekStart(d) ? ' week-start' : ''}`} key={idx} />))}</div>
       <div className="blocks">
         {tasks.map((t, taskIndex) => {
           if (activeId && t.id === activeId) return null;
@@ -126,7 +127,7 @@ function GanttRow({ staffId, name, tasks, axis, onSelectTask, onRemove, themeFil
                 end={start + width} 
                 leftPx={leftPx} 
                 widthPx={widthPx} 
-                themeFilter={themeFilter} 
+                themeFilters={themeFilters} 
                 onRemove={onRemove}
                 onEdgeHover={onEdgeHover}
               />
@@ -139,7 +140,7 @@ function GanttRow({ staffId, name, tasks, axis, onSelectTask, onRemove, themeFil
   );
 }
 
-export default function Gantt({ onSelectTask, themeFilter, startDate, skipWeekends, zoom }: { onSelectTask?: (id: string) => void; themeFilter?: string | null; startDate: string; skipWeekends: boolean; zoom: number }) {
+export default function Gantt({ onSelectTask, themeFilters, startDate, skipWeekends, zoom }: { onSelectTask?: (id: string) => void; themeFilters?: string[]; startDate: string; skipWeekends: boolean; zoom: number }) {
   const { data: staff } = useStaff();
   const { mutate: move } = useMoveTask();
   const staffList = staff ?? [];
@@ -213,7 +214,7 @@ export default function Gantt({ onSelectTask, themeFilter, startDate, skipWeeken
       <div className="gantt" style={{ ['--cell-width' as any]: `${zoom}px` }}>
         <div className="gantt-header">
           <div className="gutter" />
-          {axis.map((d, i) => (<div className="col" key={i}>{fmt(d)}</div>))}
+          {axis.map((d, i) => (<div className={`col${isWeekStart(d) ? ' week-start' : ''}`} key={i}>{fmt(d)}</div>))}
         </div>
         <div className="gantt-body">
           <div className="gantt-rows">
@@ -226,7 +227,7 @@ export default function Gantt({ onSelectTask, themeFilter, startDate, skipWeeken
                 axis={axis}
                 onSelectTask={onSelectTask}
                 onRemove={(id) => move({ taskId: id, targetStaffId: null, beforeTaskId: null, afterTaskId: null })}
-                themeFilter={themeFilter}
+                themeFilters={themeFilters}
                 activeId={activeId}
                 onEdgeHover={(info) => {
                   // Edge hover detected but not used for now

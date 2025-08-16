@@ -25,10 +25,16 @@ export const api = {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token }),
         }).then((res) => j<{ user: { id: string; email: string; name: string | null } }>(res)),
-    me: (): Promise<{ user: { id: string; email: string; name: string | null } }> =>
+    me: (): Promise<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }> =>
         fetch("/api/auth/me", {
             headers: getAuthHeaders(),
-        }).then((res) => j<{ user: { id: string; email: string; name: string | null } }>(res)),
+        }).then((res) => j<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }>(res)),
+    updateProjectTitle: (projectTitle: string | null): Promise<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }> =>
+        fetch("/api/auth/me", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            body: JSON.stringify({ projectTitle }),
+        }).then((res) => j<{ user: { id: string; email: string; name: string | null; projectTitle: string | null } }>(res)),
     
     health: () => fetch("/api/health").then((r) => r.json()),
     listStaff: (): Promise<Staff[]> => 
@@ -123,4 +129,7 @@ export const api = {
     
     getSharedThemesSummary: (token: string): Promise<{ theme: string; totalMandays: number; count: number }[]> =>
         fetch(`/api/share/${token}/themes/summary`).then(j<{ theme: string; totalMandays: number; count: number }[]>),
+    
+    getSharedProject: (token: string): Promise<{ projectTitle: string | null }> =>
+        fetch(`/api/share/${token}/project`).then(j<{ projectTitle: string | null }>),
 };
