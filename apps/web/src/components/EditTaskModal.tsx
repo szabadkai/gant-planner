@@ -47,49 +47,300 @@ export default function EditTaskModal({ task, onClose }: { task: Task; onClose: 
     deleteTask(task.id, { onSuccess: onClose });
   };
 
+  const inputStyle = {
+    padding: '12px 16px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+    background: '#ffffff',
+    color: '#1f2937',
+    fontSize: '14px',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    transition: 'all 0.2s ease',
+    outline: 'none',
+    ':focus': {
+      borderColor: '#3b82f6',
+      boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
+    }
+  };
+
+  const selectStyle = {
+    ...inputStyle,
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3e%3c/svg%3e")',
+    backgroundPosition: 'right 12px center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '16px',
+    paddingRight: '40px'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '6px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#374151',
+    fontFamily: 'system-ui, -apple-system, sans-serif'
+  };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'grid', placeItems: 'center', zIndex: 50 }} onClick={onClose}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={onSave} style={{ background: 'white', padding: 16, borderRadius: 12, minWidth: 360, display: 'grid', gap: 8 }}>
-        <h3 style={{ margin: 0 }}>Edit Task</h3>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Task name" />
-        <input value={mandays} onChange={(e) => setMandays(Number(e.target.value))} type="number" min={1} />
-        <input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Theme" />
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input value={jiraUrl} onChange={(e) => setJiraUrl(e.target.value)} placeholder="Jira URL" style={{ flex: 1 }} />
-          {jiraUrl ? (
-            <a href={normalizeUrl(jiraUrl)} target="_blank" rel="noopener noreferrer" title="Open link">↗︎</a>
-          ) : null}
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'grid', placeItems: 'center', zIndex: 50, backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <form 
+        onClick={(e) => e.stopPropagation()} 
+        onSubmit={onSave} 
+        style={{ 
+          background: 'white', 
+          padding: '32px', 
+          borderRadius: '16px', 
+          minWidth: '480px',
+          maxWidth: '560px',
+          width: '90vw',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          display: 'grid', 
+          gap: '24px', 
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '20px', borderBottom: '1px solid #f3f4f6' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '8px', 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: '600'
+          }}>
+            ✏️
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#1f2937', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Edit Task</h3>
+            <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>Update task details and dependencies</p>
+          </div>
         </div>
-        <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-          <option value="HIGH">High Priority</option>
-          <option value="MEDIUM">Medium Priority</option>
-          <option value="LOW">Low Priority</option>
-        </select>
-        <input 
-          type="date" 
-          value={dueDate} 
-          onChange={(e) => setDueDate(e.target.value)} 
-          placeholder="Due Date" 
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Dependencies:</label>
-          <select 
-            multiple 
-            value={dependencies} 
-            onChange={(e) => setDependencies(Array.from(e.target.selectedOptions, option => option.value))}
-            style={{ minHeight: '100px' }}
+        
+        <div style={{ display: 'grid', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={labelStyle}>Task Name *</label>
+              <input 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                placeholder="Enter a descriptive task name" 
+                style={inputStyle}
+                required
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Duration (Days) *</label>
+              <input 
+                value={mandays} 
+                onChange={(e) => setMandays(Number(e.target.value))} 
+                type="number" 
+                min={1} 
+                max={365}
+                style={inputStyle}
+                required
+              />
+            </div>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={labelStyle}>Theme</label>
+              <input 
+                value={theme} 
+                onChange={(e) => setTheme(e.target.value)} 
+                placeholder="e.g., Frontend, Backend, Design" 
+                style={inputStyle} 
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Priority</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value)} style={selectStyle}>
+                <option value="HIGH">🔴 High Priority</option>
+                <option value="MEDIUM">🟡 Medium Priority</option>
+                <option value="LOW">🟢 Low Priority</option>
+              </select>
+            </div>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={labelStyle}>Jira URL</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  value={jiraUrl} 
+                  onChange={(e) => setJiraUrl(e.target.value)} 
+                  placeholder="https://company.atlassian.net/browse/..." 
+                  style={{ ...inputStyle, paddingRight: jiraUrl ? '40px' : '16px' }} 
+                />
+                {jiraUrl ? (
+                  <a 
+                    href={normalizeUrl(jiraUrl)} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    title="Open in Jira"
+                    style={{ 
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#3b82f6', 
+                      textDecoration: 'none', 
+                      fontSize: '16px',
+                      background: '#eff6ff',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    ↗
+                  </a>
+                ) : null}
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Due Date</label>
+              <input 
+                type="date" 
+                value={dueDate} 
+                onChange={(e) => setDueDate(e.target.value)} 
+                style={inputStyle}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label style={labelStyle}>Task Dependencies</label>
+            <div style={{ 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px', 
+              background: '#fafafa',
+              padding: '12px'
+            }}>
+              <select 
+                multiple 
+                value={dependencies} 
+                onChange={(e) => setDependencies(Array.from(e.target.selectedOptions, option => option.value))}
+                style={{ 
+                  ...selectStyle, 
+                  minHeight: '120px', 
+                  resize: 'vertical',
+                  border: '1px solid #d1d5db',
+                  background: '#ffffff',
+                  width: '100%'
+                }}
+              >
+                {allTasks?.filter(t => t.id !== task.id).map(t => (
+                  <option key={t.id} value={t.id} style={{ padding: '8px' }}>
+                    {t.name} ({t.mandays}d)
+                  </option>
+                ))}
+              </select>
+              <div style={{ 
+                marginTop: '8px', 
+                padding: '8px', 
+                background: '#f0f9ff', 
+                borderRadius: '4px',
+                border: '1px solid #bae6fd'
+              }}>
+                <small style={{ color: '#0369a1', fontSize: '12px', fontWeight: '500' }}>
+                  💡 Hold Ctrl/Cmd to select multiple tasks that must be completed before this task can start
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginTop: '8px', 
+          paddingTop: '24px', 
+          borderTop: '1px solid #f3f4f6'
+        }}>
+          <button 
+            type="button" 
+            onClick={onDelete} 
+            disabled={isDeleting} 
+            style={{ 
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: isDeleting ? 'not-allowed' : 'pointer',
+              opacity: isDeleting ? 0.6 : 1,
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              boxShadow: isDeleting ? 'none' : '0 4px 6px -1px rgba(239, 68, 68, 0.1), 0 2px 4px -1px rgba(239, 68, 68, 0.06)'
+            }}
           >
-            {allTasks?.filter(t => t.id !== task.id).map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-          <small style={{ color: '#666' }}>Hold Ctrl/Cmd to select multiple tasks</small>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-          <button type="button" onClick={onDelete} disabled={isDeleting} style={{ background: '#991b1b', borderColor: '#991b1b' }}>Delete</button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={onClose}>Cancel</button>
-            <button type="submit" disabled={isPending}>Save</button>
+            🗑️ Delete Task
+          </button>
+          
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              type="button" 
+              onClick={onClose}
+              style={{
+                background: '#ffffff',
+                color: '#6b7280',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                ':hover': {
+                  borderColor: '#d1d5db',
+                  color: '#374151'
+                }
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              disabled={isPending || !name.trim()}
+              style={{
+                background: isPending ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 32px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: (isPending || !name.trim()) ? 'not-allowed' : 'pointer',
+                opacity: (isPending || !name.trim()) ? 0.6 : 1,
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                boxShadow: (isPending || !name.trim()) ? 'none' : '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06)'
+              }}
+            >
+              {isPending ? '⏳ Saving...' : '💾 Save Changes'}
+            </button>
           </div>
         </div>
       </form>
