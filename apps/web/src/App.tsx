@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import type { User } from './types';
-import { Share2, LogOut, Search } from 'lucide-react';
+import { Share2, LogOut, Search, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 export default function App() {
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -15,6 +15,7 @@ export default function App() {
   const [zoom, setZoom] = useState(28);
   const [showShareModal, setShowShareModal] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -243,6 +244,29 @@ export default function App() {
         border: '1px solid var(--border)',
         borderRadius: '6px'
       }}>
+        {/* Sidebar Toggle */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--border)',
+            borderRadius: '6px',
+            padding: '6px',
+            color: 'var(--text-dim)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            flexShrink: 0
+          }}
+          title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+          aria-label={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
+
         <label style={{ 
           color: 'var(--text-dim)', 
           display: 'inline-flex', 
@@ -327,7 +351,12 @@ export default function App() {
       
       {/* Main Content */}
       <div style={{ flex: 1, margin: '16px', marginTop: '12px', minHeight: 0 }}>
-        <Board startDate={startDate} skipWeekends={skipWeekends} zoom={zoom} />
+        <Board 
+          startDate={startDate} 
+          skipWeekends={skipWeekends} 
+          zoom={zoom} 
+          sidebarCollapsed={sidebarCollapsed}
+        />
       </div>
       
       {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}

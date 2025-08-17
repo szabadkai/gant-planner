@@ -41,7 +41,7 @@ function AddTaskForm() {
   );
 }
 
-export default function Board({ startDate, skipWeekends, zoom }: { startDate: string; skipWeekends: boolean; zoom: number }) {
+export default function Board({ startDate, skipWeekends, zoom, sidebarCollapsed }: { startDate: string; skipWeekends: boolean; zoom: number; sidebarCollapsed: boolean }) {
   const [editing, setEditing] = useState<null | { id: string }>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -233,8 +233,25 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} collisionDetection={pointerWithin}>
-      <div className="layout">
-        <aside className="sidebar" role="complementary" aria-label="Task management panels">
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: sidebarCollapsed ? '0fr 1fr' : '300px 1fr', 
+        gap: 12, 
+        height: '100%',
+        transition: 'grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
+        <aside 
+          className="sidebar" 
+          role="complementary" 
+          aria-label="Task management panels"
+          style={{
+            overflow: 'hidden',
+            opacity: sidebarCollapsed ? 0 : 1,
+            transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: sidebarCollapsed ? 'none' : 'auto',
+            minWidth: sidebarCollapsed ? 0 : 300
+          }}
+        >
           <div className="panel">
             <h2 id="backlog-heading">Backlog</h2>
             <AddTaskForm />
