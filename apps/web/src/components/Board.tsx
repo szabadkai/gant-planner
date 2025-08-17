@@ -237,7 +237,8 @@ export default function Board({ startDate, skipWeekends, zoom, sidebarCollapsed 
         display: 'grid', 
         gridTemplateColumns: sidebarCollapsed ? '0fr 1fr' : '300px 1fr', 
         gap: 12, 
-        height: '100%',
+        minHeight: 0,
+        flex: 1,
         transition: 'grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
         <aside 
@@ -245,7 +246,8 @@ export default function Board({ startDate, skipWeekends, zoom, sidebarCollapsed 
           role="complementary" 
           aria-label="Task management panels"
           style={{
-            overflow: 'hidden',
+            overflowX: 'hidden',
+            overflowY: sidebarCollapsed ? 'hidden' : 'auto',
             opacity: sidebarCollapsed ? 0 : 1,
             transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             pointerEvents: sidebarCollapsed ? 'none' : 'auto',
