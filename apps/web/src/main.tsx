@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
 import SharedView from './features/shared/SharedView';
+import './styles.css';
+import './mobile.css';
 
 const qc = new QueryClient();
 

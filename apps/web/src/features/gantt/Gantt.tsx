@@ -447,6 +447,13 @@ export default function Gantt({
       const sum = (q.data ?? []).reduce((acc, t) => acc + (t.mandays || 0), 0);
       if (sum + 5 > max) max = sum + 5;
     });
+    
+    // Limit horizon for mobile to prevent horizontal scroll
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobile) {
+      max = Math.min(max, 10); // Max 10 days on mobile to ensure no overflow
+    }
+    
     return max;
   }, [taskQueries.map((q) => q.data?.length ?? 0).join(',')]);
 

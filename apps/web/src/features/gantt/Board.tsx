@@ -346,14 +346,7 @@ export default function Board({
       collisionDetection={pointerWithin}
     >
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: sidebarCollapsed ? '0fr 1fr' : '300px 1fr',
-          gap: 12,
-          minHeight: 0,
-          flex: 1,
-          transition: 'grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
+        className="gantt-board-layout"
       >
         <aside
           className='sidebar'
@@ -594,16 +587,18 @@ export default function Board({
         </aside>
         <main className='main' role='main' aria-label='Gantt chart timeline'>
           <div className='panel' style={{ padding: 0 }}>
-            <Gantt
-              onSelectTask={(id) => setEditing({ id })}
-              themeFilters={themeFilters}
-              startDate={startDate}
-              skipWeekends={skipWeekends}
-              zoom={zoom}
-              searchQuery={searchQuery}
-              selectedTaskId={selectedTaskId}
-              onTaskSelect={setSelectedTaskId}
-            />
+            <div className="gantt-wrapper">
+              <Gantt
+                onSelectTask={(id) => setEditing({ id })}
+                themeFilters={themeFilters}
+                startDate={startDate}
+                skipWeekends={skipWeekends}
+                zoom={zoom}
+                searchQuery={searchQuery}
+                selectedTaskId={selectedTaskId}
+                onTaskSelect={setSelectedTaskId}
+              />
+            </div>
           </div>
         </main>
       </div>
