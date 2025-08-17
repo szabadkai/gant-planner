@@ -36,4 +36,3 @@ export type User = {
   projectTitle: string | null;
   currentProject: Project | null;
 };
-

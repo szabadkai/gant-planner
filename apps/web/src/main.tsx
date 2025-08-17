@@ -12,11 +12,10 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={qc}>
       <BrowserRouter>
         <Routes>
-          <Route path="/share/:token" element={<SharedView />} />
-          <Route path="/*" element={<App />} />
+          <Route path='/share/:token' element={<SharedView />} />
+          <Route path='/*' element={<App />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>
 );
-
