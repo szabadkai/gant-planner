@@ -1,17 +1,18 @@
 import { useMemo } from 'react';
 import { DndContext, DragEndEvent, DragStartEvent, PointerSensor, useSensor, useSensors, pointerWithin, DragOverlay } from '@dnd-kit/core';
-import { useBacklog, useCreateTask, useMoveTask, useStaff, useAutoAssign } from '../hooks';
+import { useBacklog, useCreateTask, useMoveTask, useStaff, useAutoAssign, useDeleteTask } from '../hooks';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import Papa from 'papaparse';
 import DraggableItem from './DraggableItem';
 import Droppable from './Droppable';
 import TaskCard from './TaskCard';
-import EditTaskModal from './EditTaskModal';
+import TaskDetailDrawer from './TaskDetailDrawer';
 import Gantt from './Gantt';
 import StaffPanel from './StaffPanel';
 import ThemesPanel from './ThemesPanel';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Plus, Download, Upload, Zap, Trash2 } from 'lucide-react';
 
 function AddTaskForm() {
   const { mutate: createTask } = useCreateTask();
@@ -27,12 +28,15 @@ function AddTaskForm() {
     e.currentTarget.reset();
   };
   return (
-    <form onSubmit={onSubmit} className="row">
-      <input name="name" placeholder="Task name" />
-      <input name="mandays" type="number" min={1} defaultValue={1} style={{ width: 80 }} />
-      <input name="theme" placeholder="Theme" />
-      <input name="jiraUrl" placeholder="Jira URL" />
-      <button type="submit">Add</button>
+    <form onSubmit={onSubmit} className="row" aria-label="Add new task">
+      <input name="name" placeholder="Task name" aria-label="Task name" required />
+      <input name="mandays" type="number" min={1} defaultValue={1} style={{ width: 80 }} aria-label="Duration in days" />
+      <input name="theme" placeholder="Theme" aria-label="Theme (optional)" />
+      <input name="jiraUrl" placeholder="Jira URL" aria-label="Jira URL (optional)" />
+      <button type="submit" aria-label="Add task to backlog" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Plus size={16} />
+        Add
+      </button>
     </form>
   );
 }
@@ -40,7 +44,10 @@ function AddTaskForm() {
 export default function Board({ startDate, skipWeekends, zoom }: { startDate: string; skipWeekends: boolean; zoom: number }) {
   const [editing, setEditing] = useState<null | { id: string }>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [themeFilters, setThemeFilters] = useState<string[]>([]);
+  const [showNewTaskForm, setShowNewTaskForm] = useState(false);
+  const [announcement, setAnnouncement] = useState<string>('');
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const { data: backlog } = useBacklog();
   const { data: staff } = useStaff();
@@ -53,7 +60,84 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
   });
   const { mutate: move } = useMoveTask();
   const { autoAssign, isLoading } = useAutoAssign();
+  const { mutate: deleteTask } = useDeleteTask();
   const qc = useQueryClient();
+
+  // Get all tasks for navigation
+  const allTasks = useMemo(() => {
+    const tasks = [
+      ...(backlog ?? []),
+      ...tasksQueries.flatMap((q) => q.data ?? []),
+    ];
+    return tasks;
+  }, [backlog, tasksQueries]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't interfere with form inputs or if editing
+      if (editing || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'n':
+          e.preventDefault();
+          setShowNewTaskForm(true);
+          // Focus the first input in the new task form
+          setTimeout(() => {
+            const taskNameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+            if (taskNameInput) taskNameInput.focus();
+          }, 100);
+          break;
+          
+        case 'delete':
+        case 'backspace':
+          if (selectedTaskId) {
+            e.preventDefault();
+            const task = allTasks.find(t => t.id === selectedTaskId);
+            if (task && confirm(`Delete task "${task.name}"?`)) {
+              deleteTask(selectedTaskId);
+              setSelectedTaskId(null);
+            }
+          }
+          break;
+          
+        case 'enter':
+          if (selectedTaskId) {
+            e.preventDefault();
+            setEditing({ id: selectedTaskId });
+          }
+          break;
+          
+        case 'escape':
+          e.preventDefault();
+          setSelectedTaskId(null);
+          setShowNewTaskForm(false);
+          break;
+          
+        case 'arrowdown':
+        case 'arrowup':
+          e.preventDefault();
+          if (allTasks.length > 0) {
+            const currentIndex = selectedTaskId ? allTasks.findIndex(t => t.id === selectedTaskId) : -1;
+            let nextIndex;
+            
+            if (e.key === 'ArrowDown') {
+              nextIndex = currentIndex < allTasks.length - 1 ? currentIndex + 1 : 0;
+            } else {
+              nextIndex = currentIndex > 0 ? currentIndex - 1 : allTasks.length - 1;
+            }
+            
+            setSelectedTaskId(allTasks[nextIndex]?.id || null);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editing, selectedTaskId, allTasks, deleteTask]);
 
   const toggleThemeFilter = (theme: string) => {
     setThemeFilters(prev => 
@@ -150,9 +234,9 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} collisionDetection={pointerWithin}>
       <div className="layout">
-        <aside className="sidebar">
+        <aside className="sidebar" role="complementary" aria-label="Task management panels">
           <div className="panel">
-            <h2>Backlog</h2>
+            <h2 id="backlog-heading">Backlog</h2>
             <AddTaskForm />
             <div className="row" style={{ marginTop: 4 }}>
               <button onClick={async () => {
@@ -168,9 +252,14 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
                 const a = document.createElement('a');
                 a.href = url; a.download = `export-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-              }}>Export CSV</button>
-              <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                <input type="file" accept=".csv,text/csv" onChange={async (e) => {
+              }} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Download size={16} />
+                Export CSV
+              </button>
+              <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', cursor: 'pointer', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '8px', background: 'transparent', color: 'var(--text-dim)' }}>
+                <Upload size={16} />
+                Import CSV
+                <input type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={async (e) => {
                   const file = e.target.files?.[0]; if (!file) return; const text = await file.text();
                   Papa.parse(text, { header: true, skipEmptyLines: true, complete: async (res: Papa.ParseResult<any>) => {
                     const rows: any[] = res.data as any[];
@@ -208,18 +297,33 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
               <button 
                 onClick={autoAssign}
                 disabled={isLoading || !backlog || backlog.length === 0 || !staffList || staffList.length === 0}
-                style={{ background: 'var(--accent-2)', borderColor: 'var(--accent-2)' }}
+                style={{ background: 'var(--accent-2)', borderColor: 'var(--accent-2)', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
+                <Zap size={16} />
                 {isLoading ? 'Assigning...' : 'Auto-Assign'}
               </button>
-              <button className="danger" onClick={async () => { if (confirm('Clear all data?')) { await api.clearAll(); location.reload(); } }}>Clear All</button>
+              <button className="danger" onClick={async () => { if (confirm('Clear all data?')) { await api.clearAll(); location.reload(); } }} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Trash2 size={16} />
+                Clear All
+              </button>
             </div>
             <Droppable id="list:backlog">
-              <div className="list">
+              <div 
+                className="list" 
+                role="list" 
+                aria-labelledby="backlog-heading"
+                aria-label="Backlog tasks"
+              >
                 {(backlog ?? []).map((t) => (
                   t.id === activeId ? null : (
                     <DraggableItem key={t.id} id={t.id}>
-                      <TaskCard task={t} onEdit={() => setEditing({ id: t.id })} dim={!!(themeFilters.length > 0 && !themeFilters.includes(t.theme || ''))} />
+                      <TaskCard 
+                        task={t} 
+                        onEdit={() => setEditing({ id: t.id })} 
+                        onClick={() => setSelectedTaskId(t.id)}
+                        isSelected={selectedTaskId === t.id}
+                        dim={!!(themeFilters.length > 0 && !themeFilters.includes(t.theme || ''))} 
+                      />
                     </DraggableItem>
                   )
                 ))}
@@ -227,14 +331,15 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
             </Droppable>
           </div>
           <div className="panel">
-            <h2>Staff</h2>
+            <h2 id="staff-heading">Staff</h2>
             <StaffPanel />
           </div>
           <div className="panel">
+            <h2 id="themes-heading">Themes</h2>
             <ThemesPanel selectedThemes={themeFilters} onToggle={toggleThemeFilter} />
           </div>
         </aside>
-        <main className="main">
+        <main className="main" role="main" aria-label="Gantt chart timeline">
           <div className="panel" style={{ padding: 0 }}>
             <Gantt onSelectTask={(id) => setEditing({ id })} themeFilters={themeFilters} startDate={startDate} skipWeekends={skipWeekends} zoom={zoom} />
           </div>
@@ -247,7 +352,7 @@ export default function Board({ startDate, skipWeekends, zoom }: { startDate: st
             ...tasksQueries.flatMap((q) => q.data ?? []),
           ];
           const task = all.find((t) => t.id === editing.id);
-          return task ? <EditTaskModal task={task} onClose={() => setEditing(null)} /> : null;
+          return task ? <TaskDetailDrawer task={task} onClose={() => setEditing(null)} /> : null;
         })()
       ) : null}
 

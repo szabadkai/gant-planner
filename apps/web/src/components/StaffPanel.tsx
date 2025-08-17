@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCreateStaff, useStaff, useDeleteStaff } from '../hooks';
+import { Plus, UserPlus, X } from 'lucide-react';
 
 export default function StaffPanel() {
   const { data: staff } = useStaff();
@@ -23,13 +24,19 @@ export default function StaffPanel() {
           onChange={(e) => setName(e.target.value)} 
           placeholder="Name" 
         />
-        <button type="submit">Add</button>
+        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <UserPlus size={16} />
+          Add
+        </button>
       </form>
       <ul className="staff-list">
         {(staff ?? []).map((s) => (
           <li key={s.id} className="staff-item">
             <span className="staff-name" title={s.name}>{s.name}</span>
-            <button className="remove" onClick={() => deleteStaff(s.id)}>Remove</button>
+            <button className="remove" onClick={() => deleteStaff(s.id)} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <X size={14} />
+              Remove
+            </button>
           </li>
         ))}
       </ul>

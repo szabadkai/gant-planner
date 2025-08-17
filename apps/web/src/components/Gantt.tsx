@@ -226,6 +226,31 @@ export default function Gantt({ onSelectTask, themeFilters, startDate, skipWeeke
 
   const axis = useMemo(() => buildAxis(startDate, horizon, skipWeekends), [startDate, horizon, skipWeekends]);
 
+  // Calculate current date line position
+  const currentDatePosition = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+    
+    let position = 0;
+    for (let i = 0; i < axis.length; i++) {
+      const axisDate = new Date(axis[i]);
+      axisDate.setHours(0, 0, 0, 0);
+      
+      if (axisDate.getTime() === today.getTime()) {
+        position = i;
+        break;
+      } else if (axisDate.getTime() > today.getTime()) {
+        // Today falls between this date and the previous one
+        position = i - 0.5; // Place line between days
+        break;
+      }
+    }
+    
+    return position;
+  }, [axis]);
+
+  const showCurrentDateLine = currentDatePosition >= 0 && currentDatePosition < axis.length;
+
   return (
     <section>
       <h2 style={{ display: 'none' }}>Gantt</h2>
@@ -235,6 +260,39 @@ export default function Gantt({ onSelectTask, themeFilters, startDate, skipWeeke
           {axis.map((d, i) => (<div className={`col${isWeekStart(d) ? ' week-start' : ''}`} key={i}>{fmt(d)}</div>))}
         </div>
         <div className="gantt-body">
+          {/* Current date line */}
+          {showCurrentDateLine && (
+            <div 
+              className="current-date-line"
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: `calc(var(--left-gutter) + ${currentDatePosition} * var(--cell-width))`,
+                width: '2px',
+                background: 'linear-gradient(to bottom, #ef4444, #dc2626)',
+                zIndex: 10,
+                pointerEvents: 'none',
+                boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)'
+              }}
+              title={`Today: ${new Date().toLocaleDateString()}`}
+            >
+              {/* Top indicator */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  left: '-6px',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderBottom: '8px solid #ef4444',
+                }}
+              />
+            </div>
+          )}
+          
           <div className="gantt-rows">
             {staffList.map((s, i) => (
               <GanttRow

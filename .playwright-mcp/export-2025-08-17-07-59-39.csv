@@ -1,0 +1,52 @@
+name,mandays,staff,theme,jira
+Discovery,2,Alice,,
+Frontend,5,Alice,CAT,
+hola,3,Alice,WUT,index.hu
+Heyo,15,Alice,,
+QA,3,Anyaa,,
+Discovery,2,Anyaa,,aklsjdfla
+Design,3,Anyaa,,
+Discovery,2,Anyaa,,
+QA,3,Anyaa,,
+zeppike,1,Anyaa,Mola,
+afsa,1,Anyaa,asdf,sdf
+zeppike,12,Anyaa,asdf,index.hu
+Deployment,2,Apa,,
+Discovery,2,Apa,,
+QA,3,Apa,,
+Frontend,5,Apa,,
+Deployment,2,Apa,,
+Heyo,15,Apa,,
+API Development,5,Bob,,
+asdfasd,1,Bob,BIRD,index.hu
+QA,3,Bob,,
+API Development,5,Bob,,
+Frontend,5,Bob,,
+zeppike,1,Bob,Mola,
+API Development,5,Carol,,
+Heyo,15,Carol,CAT,
+Discovery,2,Carol,DOG,DOG
+Deployment,2,Carol,,
+Design,3,Carol,,
+Design,3,Ibo,,
+Deployment,2,Ibo,,
+Frontend,5,Ibo,,123123
+Hola,5,Ibo,CAT,index.hu
+Deployment,2,Ibo,,123123
+Frontend,5,Ibo,,
+QA,3,Kami,,
+Design,3,Kami,,12312
+QA,3,Kami,,123123
+Discovery,2,Kami,,
+Hola,5,Kami,CAT,index.hu
+Design,3,Kami,,
+Deployment,2,Kami,,
+API Development,5,Kami,asdf,
+asdfasd,1,Levi,,index.hu
+asdfasd,1,Levi,,index.hu
+API Development,5,Levi,,123123
+asdf,2,Levi,asdf,index.hu
+asdf,2,Levi,asdf,index.hu
+Design,3,Levi,,
+Frontend,5,Levi,,
+API Development,5,Levi,,
