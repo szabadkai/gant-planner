@@ -2,49 +2,133 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #111827; /* Updated to match style guide */
-  --background: #111827; /* Alias for --bg */
-  --panel: #1F2937; /* Updated to match style guide */
-  --surface: #1F2937; /* Alias for --panel */
-  --text: #E5E7EB; /* Updated to match style guide */
-  --text-dim: #9CA3AF; /* Updated to match style guide */
-  --text-muted: #6B7280; /* More muted variant */
-  --border: #374151; /* Updated to match style guide */
-  --border-light: #3a3e54; /* Lighter border variant */
-  --accent: #3B82F6; /* Blue - Updated to match style guide */
-  --accent-hover: #2563EB; /* Darker blue for hover */
-  --accent-2: #7bd89a; /* Keep existing green */
-  --purple: #8B5CF6; /* Purple for themes/grouped tasks */
-  --pink: #EC4899; /* Pink/red for special/critical tasks */
-  --danger: #EF4444; /* Red - Updated to match style guide */
-  --warning: #F59E0B;
-  --success: #10B981;
-  --info: #06B6D4;
-  --modal-backdrop: rgba(15, 18, 32, 0.85); /* Dark backdrop */
-  --disabled-bg: #1a1e31;
-  --disabled-text: #5a5f7a;
-  --input-bg: #101328; /* Consistent with existing input styling */
-  --gantt-bg: #131626; /* Gantt chart background - darker than panel but same hue */
-  --gantt-border: #2a2e44; /* Gantt internal borders - matches main border */
-  --gantt-cell-border: #1e2238; /* Gantt cell borders - subtle grid lines */
+  /* Brand Colors */
+  --color-brand: #2563EB;
+  --color-brand-600: #2563EB;
+  --color-brand-700: #1D4ED8;
+  --color-brand-400: #60A5FA;
+
+  /* Surfaces */
+  --color-bg-app: #111827;
+  --color-bg-surface: #1F2937;
+  --color-bg-raised: #0B1220;
+
+  /* Borders & Lines */
+  --color-border: #374151;
+  --color-grid-subtle: #1B2432;
+  --color-grid-strong: #223049;
+
+  /* Text */
+  --color-text-primary: #E5E7EB;
+  --color-text-secondary: #9CA3AF;
+  --color-text-inverse: #0B1220;
+  --color-link: #93C5FD;
+
+  /* States */
+  --color-info: #3B82F6;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  /* Gantt Bars */
+  --gantt-blue: #3B82F6;
+  --gantt-purple: #8B5CF6;
+  --gantt-pink: #EC4899;
+  --gantt-ghost: #31415B;
+  --gantt-progress-overlay: rgba(255,255,255,0.18);
+
+  /* Today Marker */
+  --color-today-line: #F87171;
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  --font-size-xxs: 0.75rem;     /* 12px */
+  --font-size-xs: 0.8125rem;    /* 13px */
+  --font-size-sm: 0.875rem;     /* 14px */
+  --font-size-md: 1rem;         /* 16px */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-xl: 1.5rem;       /* 24px */
+
+  /* Spacing (8pt base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius */
+  --radius-2: 4px;
+  --radius-3: 6px;
+  --radius-4: 8px;
+  --radius-pill: 9999px;
+
+  /* Elevation */
+  --elev-1: 0 1px 2px rgba(0,0,0,0.35);
+  --elev-2: 0 2px 6px rgba(0,0,0,0.4);
+  --elev-3: 0 8px 24px rgba(0,0,0,0.45);
+
+  /* Z-index */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-overlay: 1000;
+  --z-modal: 1200;
+  --z-toast: 1400;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+
+  /* Data-viz (Gantt) */
+  --gantt-row: 30px;
+  --gantt-bar: 24px;
+  --gantt-radius: 6px;
+  --gantt-dep-stroke: 2px;
+  --gantt-dep-color: #9CA3AF;
+
+  /* Legacy aliases for compatibility */
+  --bg: var(--color-bg-app);
+  --panel: var(--color-bg-surface);
+  --text: var(--color-text-primary);
+  --text-dim: var(--color-text-secondary);
+  --border: var(--color-border);
+  --accent: var(--color-brand);
+  --accent-hover: var(--color-brand-700);
+  --accent-2: var(--color-success);
+  --danger: var(--color-danger);
+  --warning: var(--color-warning);
+  --success: var(--color-success);
+  --info: var(--color-info);
+  --input-bg: var(--color-bg-raised);
+  --modal-backdrop: rgba(15, 18, 32, 0.85);
+  --gantt-bg: var(--color-bg-app);
+  --gantt-border: var(--color-border);
+  --gantt-cell-border: var(--color-grid-subtle);
 }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 body { 
   margin: 0; 
-  background: var(--bg); 
-  color: var(--text); 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px; /* Body text size from style guide */
+  background: var(--color-bg-app); 
+  color: var(--color-text-primary); 
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm); /* 14px body text size from style guide */
+  line-height: 1.45; /* Body line-height from style guide */
 }
 
 .layout { display: grid; grid-template-columns: 300px 1fr; gap: 12px; height: 100%; }
 .sidebar { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
 .main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 
-.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
-.panel h2 { margin: 0 0 6px 0; font-size: 16px; color: var(--text); font-weight: 600; } /* Updated to style guide specs */
+.panel { background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-3); padding: var(--space-2); }
+.panel h2 { margin: 0 0 var(--space-3) 0; font-size: var(--font-size-md); color: var(--color-text-primary); font-weight: 600; line-height: 1.2; } /* Updated to style guide specs */
 
 .row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
 /* Make form controls wrap nicely in side panels */
@@ -58,26 +142,36 @@ body {
 /* Toolbar variant: never wrap; children don't grow */
 .row.no-wrap { flex-wrap: nowrap; }
 .row.no-wrap > * { flex: 0 0 auto !important; min-width: 0; }
-input, button { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; font: inherit; } /* Updated to 8px rounded corners */
-input { background: var(--input-bg); color: var(--text); }
+input, button { padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-4); font: inherit; } /* 8px rounded corners from tokens */
+input { background: var(--color-bg-raised); color: var(--color-text-primary); }
+input:focus { 
+  outline: 2px solid var(--color-brand-400); 
+  outline-offset: 1px; 
+  border-color: var(--color-brand); 
+}
 button { 
   cursor: pointer; 
-  background: var(--accent); 
-  color: white; 
-  border-color: var(--accent); 
-  transition: all 0.2s ease-in-out; 
+  background: var(--color-brand); 
+  color: var(--color-text-primary); 
+  border-color: var(--color-brand); 
+  transition: all var(--duration-base) var(--ease-standard); 
   font-weight: 500; /* Medium weight for buttons */
+  min-height: 40px; /* Touch target requirement */
 }
-button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+button:hover { background: var(--color-brand-700); border-color: var(--color-brand-700); }
+button:focus { 
+  outline: 2px solid var(--color-brand-400); 
+  outline-offset: 1px; 
+}
 button:active { transform: translateY(1px); }
-button:disabled { cursor: not-allowed; background: var(--disabled-bg); color: var(--disabled-text); border-color: var(--border); transform: none; }
+button:disabled { cursor: not-allowed; opacity: 0.5; transform: none; }
 
 /* Button variants */
-.button-secondary { background: transparent; color: var(--text-dim); border-color: var(--border); }
-.button-secondary:hover { background: var(--border); color: var(--text); }
-button.danger, .button-danger { background: var(--danger); border-color: var(--danger); color: white; }
+.button-secondary { background: transparent; color: var(--color-text-secondary); border-color: var(--color-border); }
+.button-secondary:hover { background: var(--color-bg-surface); color: var(--color-text-primary); }
+button.danger, .button-danger { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-text-primary); }
 button.danger:hover, .button-danger:hover { background: #DC2626; border-color: #DC2626; }
-.button-success { background: var(--success); border-color: var(--success); }
+.button-success { background: var(--color-success); border-color: var(--color-success); }
 
 .list { display: flex; flex-direction: column; gap: 6px; }
 .staff-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -89,6 +183,22 @@ button.danger:hover, .button-danger:hover { background: #DC2626; border-color: #
 .card .meta { color: var(--accent-2); font-weight: 700; }
 .card a { color: var(--accent); text-decoration: none; font-weight: 700; }
 .card a:hover { text-decoration: underline; }
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .gantt-block {
+    animation: none !important;
+  }
+}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -282,10 +392,10 @@ button.danger:hover, .button-danger:hover { background: #DC2626; border-color: #
   }
 }
 
-/* Gantt */
+/* Gantt - using data-viz tokens */
 :root {
   --cell-width: 28px;
-  --row-height: 38px;
+  --row-height: var(--gantt-row); /* 30px from style guide */
   --left-gutter: 160px;
 }
 .gantt { display: grid; grid-template-rows: auto 1fr; overflow-x: auto; overflow-y: hidden; border: 1px solid var(--border); border-radius: 6px; background: var(--gantt-bg); }
@@ -346,20 +456,20 @@ button.danger:hover, .button-danger:hover { background: #DC2626; border-color: #
 }
 .gantt-block { 
   position: absolute; 
-  top: 6px; 
-  height: calc(var(--row-height) - 12px); 
-  border: 1px solid var(--accent); 
-  background: linear-gradient(135deg, rgba(91,140,255,0.25), rgba(123,216,154,0.25)); 
-  border-radius: 6px; 
+  top: calc((var(--gantt-row) - var(--gantt-bar)) / 2); /* Center bar within row */
+  height: var(--gantt-bar); /* 24px from style guide */
+  border: 1px solid var(--gantt-blue); 
+  background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(16,185,129,0.25)); 
+  border-radius: var(--gantt-radius); /* 6px from tokens */
   display: flex; 
   align-items: center; 
-  gap: 8px; 
-  padding: 0 8px; 
+  gap: var(--space-2); 
+  padding: 0 var(--space-2); 
   cursor: default; 
   overflow: hidden; 
-  color: var(--text);
+  color: var(--color-text-primary);
   /* Subtle elastic fluid animations */
-  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all var(--duration-base) var(--ease-standard);
   transform-origin: center;
   will-change: transform, box-shadow, filter;
   /* Very subtle floating animation */
@@ -375,8 +485,8 @@ button.danger:hover, .button-danger:hover { background: #DC2626; border-color: #
   box-shadow: 
     0 4px 12px rgba(59, 130, 246, 0.4), 
     0 0 16px rgba(59, 130, 246, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.1);
-  filter: brightness(1.15);
+    var(--elev-2);
+  filter: brightness(1.04); /* +4% brightness as per style guide */
   animation: none;
 }
 .gantt-block:active {
