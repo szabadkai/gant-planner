@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useDndMonitor } from '@dnd-kit/core';
-import type { Task, Staff } from '../types';
+import type { Task, Staff } from '../../types';
 import React from 'react';
 
 function addDays(d: Date, n: number) {

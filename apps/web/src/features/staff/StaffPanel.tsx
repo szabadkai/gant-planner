@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useCreateStaff, useStaff, useDeleteStaff } from '../hooks';
+import { useCreateStaff, useStaff, useDeleteStaff } from '../../shared/hooks';
 import { Plus, UserPlus, X } from 'lucide-react';
 
 export default function StaffPanel() {

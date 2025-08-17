@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { Task } from '../types';
-import { useUpdateTask, useDeleteTask, useAllTasks } from '../hooks';
-import { normalizeUrl } from '../lib/url';
+import type { Task } from '../../types';
+import { useUpdateTask, useDeleteTask, useAllTasks } from '../../shared/hooks';
+import { normalizeUrl } from '../../shared/utils/url';
 import { X, Save, Trash2 } from 'lucide-react';
 
 export default function TaskDetailDrawer({

@@ -7,9 +7,9 @@ import {
   useSharedBacklog,
   useSharedThemes,
   useSharedProject,
-} from '../sharedHooks';
-import { api } from '../api';
-import TaskCard from './TaskCard';
+} from '../../shared/hooks/sharedHooks';
+import { api } from '../../api';
+import TaskCard from '../tasks/TaskCard';
 import SharedGantt from './SharedGantt';
 
 export default function SharedView() {

@@ -1,5 +1,5 @@
-import type { Task } from '../types';
-import { normalizeUrl } from '../lib/url';
+import type { Task } from '../../types';
+import { normalizeUrl } from '../../shared/utils/url';
 
 const priorityColors = {
   HIGH: '#ef4444',

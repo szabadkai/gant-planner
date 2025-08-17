@@ -4,9 +4,9 @@ import {
   useCreateProject,
   useUpdateProject,
   useDeleteProject,
-} from '../hooks';
+} from '../../shared/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../api';
+import { api } from '../../api';
 
 export default function ProjectSelector() {
   const [isOpen, setIsOpen] = useState(false);

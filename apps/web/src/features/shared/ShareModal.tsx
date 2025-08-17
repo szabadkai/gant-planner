@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { api } from '../../api';
 
 export default function ShareModal({ onClose }: { onClose: () => void }) {
   const [shareToken, setShareToken] = useState<string | null>(null);

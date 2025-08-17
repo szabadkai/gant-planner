@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from './api';
-import type { ID, Task, Staff, Project } from './types';
+import { api } from '../../api';
+import type { ID, Task, Staff, Project } from '../../types';
 
 export function useStaff() {
   return useQuery<Staff[]>({ queryKey: ['staff'], queryFn: api.listStaff });

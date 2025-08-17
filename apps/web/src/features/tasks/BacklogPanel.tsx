@@ -17,9 +17,9 @@ import {
   useMoveTask,
   useAutoAssign,
   useAllTasks,
-} from '../hooks';
-import type { Task } from '../types';
-import SortableItem from './SortableItem';
+} from '../../shared/hooks';
+import type { Task } from '../../types';
+import SortableItem from '../../shared/components/SortableItem';
 
 function BacklogItem({ task }: { task: Task }) {
   const dependencies = task.dependencies ? JSON.parse(task.dependencies) : [];

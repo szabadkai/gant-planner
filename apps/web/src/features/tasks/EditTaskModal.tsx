@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { Task } from '../types';
-import { useUpdateTask, useDeleteTask, useAllTasks } from '../hooks';
-import { normalizeUrl } from '../lib/url';
+import type { Task } from '../../types';
+import { useUpdateTask, useDeleteTask, useAllTasks } from '../../shared/hooks';
+import { normalizeUrl } from '../../shared/utils/url';
 
 export default function EditTaskModal({
   task,
@@ -78,7 +78,7 @@ export default function EditTaskModal({
   const selectStyle = {
     ...inputStyle,
     cursor: 'pointer',
-    appearance: 'none',
+    appearance: 'none' as const,
     backgroundImage:
       "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
     backgroundPosition: 'right 12px center',
@@ -327,11 +327,12 @@ export default function EditTaskModal({
                 style={{
                   ...selectStyle,
                   minHeight: isMobile ? '100px' : '120px',
-                  resize: 'vertical',
+                  resize: 'vertical' as const,
                   border: '1px solid #d1d5db',
                   background: '#ffffff',
                   width: '100%',
                   fontSize: isMobile ? '16px' : '14px', // Prevents zoom on iOS
+                  appearance: 'none' as const,
                 }}
               >
                 {allTasks

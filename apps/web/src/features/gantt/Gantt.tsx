@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { useMoveTask, useStaff } from '../hooks';
-import { api } from '../api';
+import { useMoveTask, useStaff } from '../../shared/hooks';
+import { api } from '../../api';
 import { useDroppable, useDraggable, useDndMonitor } from '@dnd-kit/core';
-import type { Task } from '../types';
+import type { Task } from '../../types';
 import React from 'react';
 
 function addDays(d: Date, n: number) {
@@ -198,18 +198,37 @@ function GanttBlock({
       style={style}
       data-dragging={isDragging}
       data-drag-end={isDragEnding}
+      aria-label={`Task: ${task.name}, ${task.mandays} days${task.theme ? `, Theme: ${task.theme}` : ''}. Click to select, double-click to remove.`}
+      data-selected={isSelected}
+      {...attributes}
+      {...listeners}
       onClick={(e) => {
         e.stopPropagation();
         onSelect?.(task.id);
       }}
       onDoubleClick={() => onRemove?.(task.id)}
+      onKeyDown={(e) => {
+        // Handle accessibility keyboard events
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(task.id);
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault();
+          onRemove?.(task.id);
+        }
+        // Let drag library handle other keyboard events
+      }}
       onMouseMove={onMove}
       onMouseLeave={() => onEdgeHover?.(null)}
-      {...attributes}
-      {...listeners}
     >
-      <span>{task.name}</span>
-      <span className='meta'>{task.mandays}d</span>
+      <span aria-hidden='true'>{task.name}</span>
+      <span 
+        className='meta' 
+        id={`task-duration-${task.id}`}
+        aria-label={`Duration: ${task.mandays} days`}
+      >
+        {task.mandays}d
+      </span>
     </div>
   );
 }
@@ -251,15 +270,31 @@ function GanttRow({
   const displayName = isMobile ? truncateNameForMobile(name) : name;
 
   return (
-    <div className={`gantt-row${isOver ? ' drag-over' : ''}`}>
-      <div className='label' title={name}>
+    <div 
+      className={`gantt-row${isOver ? ' drag-over' : ''}`}
+      role='row'
+      aria-label={`Staff member: ${name}, ${tasks.length} tasks`}
+    >
+      <div 
+        className='label' 
+        title={name}
+        role='rowheader'
+        aria-label={`Staff member: ${name}`}
+      >
         {displayName}
       </div>
-      <div className='grid' ref={setNodeRef}>
+      <div 
+        className='grid' 
+        ref={setNodeRef}
+        role='rowgroup'
+        aria-label={`Timeline for ${name}`}
+      >
         {axis.map((d, idx) => (
           <div
             className={`cell${isWeekStart(d) ? ' week-start' : ''}`}
             key={idx}
+            role='gridcell'
+            aria-label={`${fmt(d)} - ${name}`}
           />
         ))}
       </div>
@@ -447,24 +482,36 @@ export default function Gantt({
     currentDatePosition >= 0 && currentDatePosition < axis.length;
 
   return (
-    <section>
-      <h2 style={{ display: 'none' }}>Gantt</h2>
+    <section role='main' aria-label='Gantt Chart Timeline'>
+      <h2 className='sr-only'>Gantt Chart Timeline View</h2>
       <div
         className='gantt'
         style={{ ['--cell-width' as any]: `${zoom}px` }}
+        role='grid'
+        aria-label={`Gantt chart with ${staff?.length || 0} staff members and ${horizon} day timeline`}
+        tabIndex={0}
         onClick={(e) => {
           // Clear selection when clicking on empty space
           if (e.target === e.currentTarget) {
             onTaskSelect?.(null);
           }
         }}
+        onKeyDown={(e) => {
+          // Add keyboard navigation support
+          if (e.key === 'Escape') {
+            onTaskSelect?.(null);
+          }
+        }}
       >
-        <div className='gantt-header'>
-          <div className='gutter' />
+        <div className='gantt-header' role='rowgroup' aria-label='Timeline dates'>
+          <div className='gutter' role='columnheader' aria-label='Staff members' />
           {axis.map((d, i) => (
             <div
               className={`col${isWeekStart(d) ? ' week-start' : ''}`}
               key={i}
+              role='columnheader'
+              aria-label={`Date: ${d.toLocaleDateString()}`}
+              title={d.toLocaleDateString()}
             >
               {fmt(d)}
             </div>

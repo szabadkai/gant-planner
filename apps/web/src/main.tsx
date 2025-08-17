@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
-import SharedView from './components/SharedView';
+import SharedView from './features/shared/SharedView';
 
 const qc = new QueryClient();
 

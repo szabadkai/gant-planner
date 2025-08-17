@@ -1,4 +1,4 @@
-import { useStaff, useStaffTasks } from '../hooks';
+import { useStaff, useStaffTasks } from '../../shared/hooks';
 
 function StaffTasks({ staffId }: { staffId: string }) {
   const { data: tasks } = useStaffTasks(staffId);

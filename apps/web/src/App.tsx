@@ -1,8 +1,7 @@
-import Board from './features/gantt/Board';
-import Login from './features/auth/Login';
+import { Board } from './features/gantt';
+import { Login } from './features/auth';
 import ShareModal from './features/shared/ShareModal';
-import ProjectSelector from './features/projects/ProjectSelector';
-import NoProject from './features/projects/NoProject';
+import { ProjectSelector, NoProject } from './features/projects';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
